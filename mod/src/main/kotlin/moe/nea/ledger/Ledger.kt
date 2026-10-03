@@ -7,6 +7,7 @@ import moe.nea.ledger.config.LedgerConfig
 import moe.nea.ledger.config.UpdateUi
 import moe.nea.ledger.config.UpdateUiMarker
 import moe.nea.ledger.database.Database
+import moe.nea.ledger.eventbus.LedgerEventBus
 import moe.nea.ledger.events.ChatReceived
 import moe.nea.ledger.events.LateWorldLoadEvent
 import moe.nea.ledger.events.RegistrationFinishedEvent
@@ -50,12 +51,15 @@ import moe.nea.ledger.utils.di.DI
 import moe.nea.ledger.utils.di.DIProvider
 import moe.nea.ledger.utils.network.RequestUtil
 import net.fabricmc.api.ClientModInitializer
+import net.fabricmc.fabric.api.client.message.v1.ClientReceiveMessageEvents
+import net.minecraft.client.Minecraft
+import net.minecraft.network.chat.Component
 import org.apache.logging.log4j.LogManager
 import java.io.File
 import java.util.concurrent.ConcurrentLinkedQueue
 
 @Mod(modid = "ledger", useMetadata = true, version = BuildConfig.VERSION)
-class Ledger : ClientModInitializer{
+class Ledger : ClientModInitializer {
 	/*
 	You have withdrawn 1M coins! You now have 518M coins in your account!
 	You have deposited 519M coins! You now have 519M coins in your account!
@@ -113,7 +117,7 @@ class Ledger : ClientModInitializer{
 
 		TelemetryProvider.setupFor(di)
 		di.registerSingleton(this)
-		di.registerSingleton()
+		di.registerSingleton(Minecraft.getInstance())
 		di.registerSingleton(gson)
 		di.register(LedgerConfig::class.java, DIProvider { managedConfig.instance })
 		di.register(Config::class.java, DIProvider.fromInheritance(LedgerConfig::class.java))
@@ -164,7 +168,7 @@ class Ledger : ClientModInitializer{
 		val errorUtil = di.provide<ErrorUtil>()
 		errorUtil.catch {
 			di.instantiateAll()
-			di.getAllInstances().forEach(MinecraftForge.EVENT_BUS::register)
+			di.getAllInstances().forEach(LedgerEventBus::subscribeAll)
 			di.getAllInstances().filterIsInstance<ICommand>()
 				.forEach { ClientCommandHandler.instance.registerCommand(it) }
 		}
@@ -173,7 +177,7 @@ class Ledger : ClientModInitializer{
 			di.provide<Database>().loadAndUpgrade()
 		}
 
-		MinecraftForge.EVENT_BUS.post(RegistrationFinishedEvent())
+		RegistrationFinishedEvent().post()
 	}
 
 	var lastJoin = -1L
@@ -202,9 +206,30 @@ class Ledger : ClientModInitializer{
 		}
 	}
 
-	@SubscribeEvent(receiveCanceled = true, priority = EventPriority.HIGHEST)
-	fun onChat(event: ClientChatReceivedEvent) {
-		if (event.type != 2.toByte())
-			MinecraftForge.EVENT_BUS.post(ChatReceived(event))
+	private var lastReceivedMessage: Component? = null
+
+	fun registerChatEvent() {
+		ClientReceiveMessageEvents.ALLOW_CHAT.register(ClientReceiveMessageEvents.AllowChat { message, signedMessage, sender, params, receptionTimestamp ->
+			lastReceivedMessage = message
+			ChatReceived(message).post()
+			true
+		})
+		ClientReceiveMessageEvents.ALLOW_GAME.register(ClientReceiveMessageEvents.AllowGame { message, overlay ->
+			lastReceivedMessage = message
+			if (!overlay)
+				ChatReceived(message).post()
+			true
+		})
+		ClientReceiveMessageEvents.GAME_CANCELED.register(ClientReceiveMessageEvents.GameCanceled { message, overlay ->
+			if (!overlay && lastReceivedMessage !== message) {
+				ChatReceived(message).post()
+			}
+		})
+		ClientReceiveMessageEvents.CHAT_CANCELED.register(ClientReceiveMessageEvents.ChatCanceled { message, signedMessage, sender, params, receptionTimestamp ->
+			if (lastReceivedMessage !== message) {
+				ChatReceived(message).post()
+			}
+		})
 	}
+
 }

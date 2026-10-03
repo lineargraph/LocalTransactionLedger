@@ -8,7 +8,7 @@ import java.time.Instant
 data class ChatReceived(
     val message: String,
     val timestamp: Instant = Instant.now()
-) : Event() {
+) : LedgerEvent() {
     constructor(event: ClientChatReceivedEvent) : this(
         event.message.unformattedText.unformattedString().trimEnd()
     )

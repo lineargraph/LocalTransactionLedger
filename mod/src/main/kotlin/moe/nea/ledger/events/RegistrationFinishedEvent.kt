@@ -1,7 +1,10 @@
 package moe.nea.ledger.events
 
-import net.minecraftforge.fml.common.eventhandler.Event
+import com.google.gson.JsonElement
+import com.google.gson.JsonPrimitive
 
-class RegistrationFinishedEvent : Event() {
-
+class RegistrationFinishedEvent : LedgerEvent() {
+	override fun serialize(): JsonElement {
+		return JsonPrimitive("RegistrationFinished")
+	}
 }
