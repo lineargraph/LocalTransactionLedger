@@ -1,7 +1,5 @@
 package moe.nea.ledger.utils
 
-import moe.nea.ledger.mixin.AccessorContainerDispenser
-import moe.nea.ledger.mixin.AccessorContainerHopper
 import net.minecraft.client.gui.GuiScreen
 import net.minecraft.client.gui.inventory.GuiContainer
 import net.minecraft.inventory.ContainerChest

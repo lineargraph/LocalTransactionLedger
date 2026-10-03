@@ -8,7 +8,6 @@ import moe.nea.ledger.LedgerLogger
 import moe.nea.ledger.SHORT_NUMBER_PATTERN
 import moe.nea.ledger.TransactionType
 import moe.nea.ledger.events.ChatReceived
-import moe.nea.ledger.mixin.AccessorGuiEditSign
 import moe.nea.ledger.parseShortNumber
 import moe.nea.ledger.useMatcher
 import moe.nea.ledger.utils.di.Inject

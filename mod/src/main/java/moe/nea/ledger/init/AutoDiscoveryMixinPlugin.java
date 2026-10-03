@@ -1,9 +1,7 @@
 package moe.nea.ledger.init;
 
-import net.minecraft.launchwrapper.Launch;
-import org.spongepowered.asm.lib.tree.ClassNode;
+import net.fabricmc.loader.api.FabricLoader;
 import org.spongepowered.asm.mixin.extensibility.IMixinConfigPlugin;
-import org.spongepowered.asm.mixin.extensibility.IMixinInfo;
 
 import java.io.IOException;
 import java.net.MalformedURLException;
@@ -14,7 +12,6 @@ import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.Set;
 import java.util.stream.Stream;
 import java.util.zip.ZipEntry;
 import java.util.zip.ZipInputStream;
@@ -60,8 +57,8 @@ public class AutoDiscoveryMixinPlugin implements IMixinConfigPlugin {
 		if (string.endsWith(".class")) {
 			try {
 				return new URL(string.replace("\\", "/")
-				                     .replace(getClass().getCanonicalName()
-				                                        .replace(".", "/") + ".class", ""));
+						.replace(getClass().getCanonicalName()
+								.replace(".", "/") + ".class", ""));
 			} catch (MalformedURLException e) {
 				throw new RuntimeException(e);
 			}
@@ -99,8 +96,8 @@ public class AutoDiscoveryMixinPlugin implements IMixinConfigPlugin {
 		if (!className.endsWith(".class")) return;
 		if (className.indexOf('$') >= 0) return;
 		String norm = (className.endsWith(".class") ? className.substring(0, className.length() - ".class".length()) : className)
-			              .replace("\\", "/")
-			              .replace("/", ".");
+				.replace("\\", "/")
+				.replace("/", ".");
 		if (norm.startsWith(getMixinPackage() + ".") && !norm.endsWith(".")) {
 			mixins.add(norm.substring(getMixinPackage().length() + 1));
 		}
@@ -130,7 +127,7 @@ public class AutoDiscoveryMixinPlugin implements IMixinConfigPlugin {
 		}
 		System.out.println("Found mixins: " + mixins);
 
-		if (!(Boolean) Launch.blackboard.get("fml.deobfuscatedEnvironment")) {
+		if (!FabricLoader.getInstance().isDevelopmentEnvironment()) {
 			mixins.removeIf(it -> it.contains("devenv"));
 		}
 
@@ -146,7 +143,7 @@ public class AutoDiscoveryMixinPlugin implements IMixinConfigPlugin {
 		System.out.println("Trying to find mixins from directory");
 		try (Stream<Path> classes = Files.walk(classRoot.resolve(getMixinBaseDir()))) {
 			classes.map(it -> classRoot.relativize(it).toString())
-			       .forEach(this::tryAddMixinClass);
+					.forEach(this::tryAddMixinClass);
 		} catch (IOException e) {
 			throw new RuntimeException(e);
 		}
@@ -168,28 +165,4 @@ public class AutoDiscoveryMixinPlugin implements IMixinConfigPlugin {
 		}
 	}
 
-	@Override
-	public void preApply(String targetClassName, ClassNode targetClass, String mixinClassName, IMixinInfo mixinInfo) {
-
-	}
-
-	@Override
-	public void postApply(String targetClassName, ClassNode targetClass, String mixinClassName, IMixinInfo mixinInfo) {
-
-	}
-
-	@Override
-	public String getRefMapperConfig() {
-		return null;
-	}
-
-	@Override
-	public boolean shouldApplyMixin(String targetClassName, String mixinClassName) {
-		return true;
-	}
-
-	@Override
-	public void acceptTargets(Set<String> myTargets, Set<String> otherTargets) {
-
-	}
 }
