@@ -171,7 +171,7 @@ class Ledger : ClientModInitializer {
 		val errorUtil = di.provide<ErrorUtil>()
 		errorUtil.catch {
 			di.instantiateAll()
-			di.getAllInstances().forEach(LedgerEventBus::subscribeAll)
+			di.getAllInstances().forEach { LedgerEventBus.subscribeAll(it) }
 			di.getAllInstances().filterIsInstance<ICommand>()
 				.forEach { ClientCommandHandler.instance.registerCommand(it) }
 		}
