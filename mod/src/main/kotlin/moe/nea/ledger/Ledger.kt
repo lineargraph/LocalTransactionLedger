@@ -49,24 +49,13 @@ import moe.nea.ledger.utils.MinecraftExecutor
 import moe.nea.ledger.utils.di.DI
 import moe.nea.ledger.utils.di.DIProvider
 import moe.nea.ledger.utils.network.RequestUtil
-import net.minecraft.client.Minecraft
-import net.minecraft.command.ICommand
-import net.minecraftforge.client.ClientCommandHandler
-import net.minecraftforge.client.event.ClientChatReceivedEvent
-import net.minecraftforge.common.MinecraftForge
-import net.minecraftforge.event.entity.EntityJoinWorldEvent
-import net.minecraftforge.fml.common.Mod
-import net.minecraftforge.fml.common.event.FMLInitializationEvent
-import net.minecraftforge.fml.common.eventhandler.EventPriority
-import net.minecraftforge.fml.common.eventhandler.SubscribeEvent
-import net.minecraftforge.fml.common.gameevent.TickEvent
-import net.minecraftforge.fml.common.gameevent.TickEvent.ClientTickEvent
+import net.fabricmc.api.ClientModInitializer
 import org.apache.logging.log4j.LogManager
 import java.io.File
 import java.util.concurrent.ConcurrentLinkedQueue
 
 @Mod(modid = "ledger", useMetadata = true, version = BuildConfig.VERSION)
-class Ledger {
+class Ledger : ClientModInitializer{
 	/*
 	You have withdrawn 1M coins! You now have 518M coins in your account!
 	You have deposited 519M coins! You now have 519M coins in your account!
@@ -119,13 +108,12 @@ class Ledger {
 		fun leakDI() = di
 	}
 
-	@Mod.EventHandler
-	fun init(event: FMLInitializationEvent) {
+	override fun onInitializeClient() {
 		logger.info("Initializing ledger")
 
 		TelemetryProvider.setupFor(di)
 		di.registerSingleton(this)
-		di.registerSingleton(Minecraft.getMinecraft())
+		di.registerSingleton()
 		di.registerSingleton(gson)
 		di.register(LedgerConfig::class.java, DIProvider { managedConfig.instance })
 		di.register(Config::class.java, DIProvider.fromInheritance(LedgerConfig::class.java))

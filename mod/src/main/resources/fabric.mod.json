@@ -1,0 +1,15 @@
+{
+  "schemaVersion": 1,
+  "id": "${modid}",
+  "name": "Simple Ledger Mod",
+  "description": "Export all your activities into a file",
+  "version": "${version}",
+  "depends": {
+    "minecraft": ">=${mcversion}"
+  },
+  "entrypoints": {
+    "client": [
+"moe.nea.ledger.Ledger"
+    ]
+  }
+}

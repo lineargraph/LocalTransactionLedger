@@ -4,23 +4,29 @@ import proguard.gradle.ProGuardTask
 plugins {
 	idea
 	java
-	id("net.fabricmc.fabric-loom") version "1.18-SNAPSHOT"
+	id("net.fabricmc.fabric-loom") version "1.17.21"
 	id("com.github.johnrengelman.shadow") version "8.1.1"
 	id("com.github.gmazzo.buildconfig")
 	kotlin("jvm")
 	id("ledger-repo")
 }
-val baseGroup: String by project
+val baseGroup = project.findProperty("baseGroup") as String
 val mcVersion = project.property("minecraft_version") as String
 val loaderVersion = project.property("loader_version") as String
 val fabricApiVersion = project.property("fabric_api_version") as String
 val mixinGroup = "$baseGroup.mixin"
-val modid: String by project
+val modid: String = project.property("modid") as String
 
 // Toolchains:
 java {
 	toolchain.languageVersion.set(JavaLanguageVersion.of(25))
 }
+
+
+loom {
+	clientOnlyMinecraftJar()
+}
+
 
 // Minecraft configuration:
 //loom {
@@ -82,7 +88,7 @@ tasks.downloadRepo {
 	hash.set("dcf1dbc")
 }
 
-val generateItemIds by tasks.register("generateItemIds", GenerateItemIds::class) {
+val generateItemIds = tasks.register("generateItemIds", GenerateItemIds::class) {
 	repoHash.set(tasks.downloadRepo.get().hash)
 	packageName.set("moe.nea.ledger.gen")
 	outputDirectory.set(layout.buildDirectory.dir("generated/sources/itemIds"))
@@ -104,7 +110,7 @@ tasks.processResources {
 	inputs.property("modid", modid)
 	inputs.property("basePackage", baseGroup)
 
-	filesMatching(listOf("fabric.mod.json","mixins.$modid.json")) {
+	filesMatching(listOf("fabric.mod.json", "mixins.$modid.json")) {
 		expand(inputs.properties)
 	}
 }
