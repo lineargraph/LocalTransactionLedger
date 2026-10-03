@@ -1,24 +1,11 @@
 package moe.nea.ledger.modules
 
-import moe.nea.ledger.ExpiringValue
-import moe.nea.ledger.ItemChange
-import moe.nea.ledger.ItemId
-import moe.nea.ledger.ItemIdProvider
-import moe.nea.ledger.LedgerEntry
-import moe.nea.ledger.LedgerLogger
-import moe.nea.ledger.SHORT_NUMBER_PATTERN
-import moe.nea.ledger.TransactionType
+import moe.nea.ledger.*
+import moe.nea.ledger.eventbus.SubscribeEvent
 import moe.nea.ledger.events.BeforeGuiAction
 import moe.nea.ledger.events.ChatReceived
-import moe.nea.ledger.getInternalId
-import moe.nea.ledger.getLore
-import moe.nea.ledger.parseShortNumber
-import moe.nea.ledger.unformattedString
-import moe.nea.ledger.useMatcher
 import moe.nea.ledger.utils.di.Inject
-import net.minecraft.client.gui.inventory.GuiChest
-import net.minecraft.inventory.ContainerChest
-import moe.nea.ledger.eventbus.SubscribeEvent
+import net.minecraft.world.Container
 import java.util.regex.Pattern
 import kotlin.time.Duration.Companion.seconds
 
@@ -44,8 +31,8 @@ class AuctionHouseDetection @Inject constructor(val ledger: LedgerLogger, val id
 	@SubscribeEvent
 	fun onCreateAuctionClick(event: BeforeGuiAction) {
 		val slots = event.chestSlots ?: return
-		if (!createAuctionScreen.asPredicate().test(slots.lowerChestInventory.name)) return
-		val auctionSlot = slots.lowerChestInventory.getStackInSlot(9 + 2) ?: return
+		if (!createAuctionScreen.asPredicate().test(event.screenName)) return
+		val auctionSlot = slots.getItem(9 + 2) ?: return
 		val creationCost = auctionSlot.getLore().firstNotNullOfOrNull {
 			auctionCreationCostPattern.useMatcher(it.unformattedString()) { parseShortNumber(group("cost")) }
 		}
@@ -58,11 +45,13 @@ class AuctionHouseDetection @Inject constructor(val ledger: LedgerLogger, val id
 	fun onCreateAuctionChat(event: ChatReceived) {
 		auctionCreatedChatPattern.useMatcher(event.message) {
 			lastCreationCost.consume(3.seconds)?.let { cost ->
-				ledger.logEntry(LedgerEntry(
-					TransactionType.AUCTION_LISTING_CHARGE,
-					event.timestamp,
-					listOf(ItemChange.loseCoins(cost))
-				))
+				ledger.logEntry(
+					LedgerEntry(
+						TransactionType.AUCTION_LISTING_CHARGE,
+						event.timestamp,
+						listOf(ItemChange.loseCoins(cost))
+					)
+				)
 			}
 		}
 	}
@@ -107,9 +96,8 @@ class AuctionHouseDetection @Inject constructor(val ledger: LedgerLogger, val id
 
 	@SubscribeEvent
 	fun onBeforeAuctionCollected(event: BeforeGuiAction) {
-		val chest = (event.gui as? GuiChest) ?: return
-		val slots = chest.inventorySlots as ContainerChest
-		val name = slots.lowerChestInventory.displayName.unformattedText.unformattedString()
+		val slots = event.chestSlots ?: return
+		val name = event.screenName
 
 		if (name == "BIN Auction View" || name == "Auction View") {
 			handleCollectSingleAuctionView(slots)
@@ -119,23 +107,23 @@ class AuctionHouseDetection @Inject constructor(val ledger: LedgerLogger, val id
 		}
 	}
 
-	private fun handleCollectMultipleAuctionsView(slots: ContainerChest) {
+	private fun handleCollectMultipleAuctionsView(slots: Container) {
 		lastViewedItems =
-			(0 until slots.lowerChestInventory.sizeInventory)
-				.mapNotNull { slots.lowerChestInventory.getStackInSlot(it) }
+			slots
+				.asSequence()
 				.filter {
 					it.getLore().contains("§7Status: §aSold!") // BINs
 							|| it.getLore().contains("§7Status: §aEnded!") // Auctions
 				}
-				.mapNotNull { LastViewedItem(it.stackSize, it.getInternalId() ?: return@mapNotNull null) }
+				.mapNotNull { LastViewedItem(it.count, it.getInternalId() ?: return@mapNotNull null) }
 				.toMutableList()
 	}
 
 
-	fun handleCollectSingleAuctionView(slots: ContainerChest) {
-		val soldItem = slots.lowerChestInventory.getStackInSlot(9 + 4) ?: return
+	fun handleCollectSingleAuctionView(slots: Container) {
+		val soldItem = slots.getItem(9 + 4) ?: return
 		val id = soldItem.getInternalId() ?: return
-		val count = soldItem.stackSize
+		val count = soldItem.count
 		lastViewedItems = mutableListOf(LastViewedItem(count, id))
 	}
 

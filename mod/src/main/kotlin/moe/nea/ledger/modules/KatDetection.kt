@@ -56,9 +56,9 @@ class KatDetection {
 	@SubscribeEvent
 	fun onClick(event: BeforeGuiAction) {
 		val slots = event.chestSlots ?: return
-		val petItem = slots.lowerChestInventory.getStackInSlot(petSlot) ?: return
+		val petItem = slots.getItem(petSlot)
 		val beforePetId = petItem.getInternalId() ?: return
-		val confirmItem = slots.lowerChestInventory.getStackInSlot(confirmSlot) ?: return
+		val confirmItem = slots.getItem(confirmSlot)
 		val lore = confirmItem.getLore()
 		val cost = itemIdProvider.findCostItemsFromSpan(lore)
 		lastPetUpgradeScheduled = PetUpgrade(beforePetId, cost)

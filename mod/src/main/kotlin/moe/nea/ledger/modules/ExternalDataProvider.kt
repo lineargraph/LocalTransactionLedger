@@ -1,14 +1,14 @@
 package moe.nea.ledger.modules
 
+import com.google.gson.JsonElement
+import moe.nea.ledger.eventbus.SubscribeEvent
 import moe.nea.ledger.events.InitializationComplete
+import moe.nea.ledger.events.LedgerEvent
 import moe.nea.ledger.events.SupplyDebugInfo
 import moe.nea.ledger.utils.GsonUtil
 import moe.nea.ledger.utils.di.Inject
 import moe.nea.ledger.utils.network.Request
 import moe.nea.ledger.utils.network.RequestUtil
-import net.minecraftforge.common.MinecraftForge
-import net.minecraftforge.fml.common.eventhandler.Event
-import moe.nea.ledger.eventbus.SubscribeEvent
 import java.util.concurrent.CompletableFuture
 
 class ExternalDataProvider @Inject constructor(
@@ -31,7 +31,11 @@ class ExternalDataProvider @Inject constructor(
 
 	lateinit var itemNames: Map<String, String>
 
-	class DataLoaded(val provider: ExternalDataProvider) : Event()
+	class DataLoaded(val provider: ExternalDataProvider) : LedgerEvent() {
+		override fun serialize(): JsonElement {
+			TODO("Not yet implemented")
+		}
+	}
 
 	@SubscribeEvent
 	fun onDebugData(debugInfo: SupplyDebugInfo) {
@@ -41,6 +45,6 @@ class ExternalDataProvider @Inject constructor(
 	@SubscribeEvent
 	fun onInitComplete(event: InitializationComplete) {
 		itemNames = itemNameFuture.join()
-		MinecraftForge.EVENT_BUS.post(DataLoaded(this))
+		DataLoaded(this).post()
 	}
 }

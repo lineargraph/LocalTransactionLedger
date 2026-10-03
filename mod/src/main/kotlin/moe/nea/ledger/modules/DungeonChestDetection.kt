@@ -23,7 +23,7 @@ class DungeonChestDetection @Inject constructor(val logger: LedgerLogger) : Ches
 	@SubscribeEvent
 	fun onKismetClick(event: GuiClickEvent) {
 		val slot = event.slotIn ?: return
-		if (!slot.inventory.displayName.unformattedText.unformattedString().endsWith(" Chest")) return
+		if (!event.screenName.unformattedString().endsWith(" Chest")) return
 		val stack = slot.stack ?: return
 		if (stack.getDisplayNameU() == "§aReroll Chest") {
 			logger.logEntry(

@@ -26,7 +26,7 @@ class CaducousFeederDetection {
 	@SubscribeEvent
 	fun onFeederClick(event: GuiClickEvent) {
 		val slot = event.slotIn ?: return
-		val displayName = slot.inventory.displayName.unformattedText
+		val displayName = event.screenName
 		if (!displayName.unformattedString().contains("Confirm Caducous Feeder")) return
 		val stack = slot.stack ?: return
 		val player = minecraft.thePlayer ?: return

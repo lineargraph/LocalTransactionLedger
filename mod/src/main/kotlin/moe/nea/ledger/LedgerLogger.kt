@@ -11,7 +11,7 @@ import moe.nea.ledger.utils.di.Inject
 import net.minecraft.client.Minecraft
 import net.minecraft.network.chat.Component
 import moe.nea.ledger.eventbus.SubscribeEvent
-import net.minecraftforge.fml.common.gameevent.TickEvent.ClientTickEvent
+import moe.nea.ledger.events.TickEvent
 import java.io.File
 import java.text.SimpleDateFormat
 import java.util.*
@@ -74,7 +74,7 @@ class LedgerLogger {
 	}
 
 	@SubscribeEvent
-	fun onTick(event: ClientTickEvent) {
+	fun onTick(event: TickEvent) {
 		if (!hasRecentlyMerged && (System.currentTimeMillis() - lastMergeTime) > 60_000L) {
 			lastMergeTime = System.currentTimeMillis()
 			doMerge()

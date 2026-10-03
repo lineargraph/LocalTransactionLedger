@@ -23,8 +23,8 @@ class KuudraChestDetection : ChestDetection() {
 	@Inject
 	lateinit var minecraft: Minecraft
 	fun hasKey(keyItem: ItemId): Boolean {
-		val p = minecraft.thePlayer ?: return false
-		return p.inventory.mainInventory.any { it?.getInternalId() == keyItem }
+		val p = minecraft.player ?: return false
+		return p.inventory.any { it.getInternalId() == keyItem }
 	}
 
 	@SubscribeEvent
@@ -36,7 +36,7 @@ class KuudraChestDetection : ChestDetection() {
 		if (requiredKey != null && !hasKey(requiredKey)) {
 			return
 		}
-		if (requiredKey == null && event.slotIn.inventory.name != "Free Chest") {
+		if (requiredKey == null && event.screenName != "Free Chest") {
 			return
 		}
 		log.logEntry(LedgerEntry(

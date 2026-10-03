@@ -7,11 +7,11 @@ data class ItemId(
 ) {
 	@RemoveInRelease
 	fun singleItem(): Pair<ItemId, Double> {
-		return withStackSize(1)
+		return withcount(1)
 	}
 
 	@RemoveInRelease
-	fun withStackSize(size: Number): Pair<ItemId, Double> {
+	fun withcount(size: Number): Pair<ItemId, Double> {
 		return Pair(this, size.toDouble())
 	}
 

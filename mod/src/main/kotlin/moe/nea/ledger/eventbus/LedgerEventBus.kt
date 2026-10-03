@@ -17,13 +17,13 @@ class LedgerEventBus<T : LedgerEvent>(
 ) {
 
 	val fabricEvent: Event<Consumer<T>> = EventFactory
-		.createArrayBacked(Consumer::class.java) { eventHandlers ->
+		.createWithPhases(Consumer::class.java, { eventHandlers ->
 			{ event ->
 				eventHandlers.forEach {
 					it.accept(event)
 				}
 			}
-		}
+		}, *EventPriority.entries.map { it.identifier }.toTypedArray())
 
 	companion object {
 		fun post(event: LedgerEvent) {
@@ -58,7 +58,7 @@ class LedgerEventBus<T : LedgerEvent>(
 					MethodType.methodType(null, type)
 				)
 				val consumer = callsite.target.invoke(obj) as Consumer<*>
-				bus.registerUnchecked(consumer)
+				bus.registerUnchecked(consumer, annotation)
 			}
 		}
 
@@ -70,13 +70,13 @@ class LedgerEventBus<T : LedgerEvent>(
 		private val buses = mutableMapOf<Class<out LedgerEvent>, LedgerEventBus<*>>()
 	}
 
-	fun register(consumer: Consumer<T>) {
+	fun register(consumer: Consumer<T>, eventPriority: EventPriority = EventPriority.NORMAL) {
 		fabricEvent.register(consumer)
 	}
 
-	private fun registerUnchecked(consumer: Consumer<*>) {
+	private fun registerUnchecked(consumer: Consumer<*>, subscribeEvent: SubscribeEvent) {
 		@Suppress("UNCHECKED_CAST")
-		register(consumer as Consumer<T>)
+		register(consumer as Consumer<T>, subscribeEvent.priority)
 	}
 
 }

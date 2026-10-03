@@ -17,6 +17,7 @@ import moe.nea.ledger.unformattedString
 import moe.nea.ledger.useMatcher
 import moe.nea.ledger.utils.di.Inject
 import moe.nea.ledger.eventbus.SubscribeEvent
+import moe.nea.ledger.utils.MigrationUtil.stack
 import kotlin.time.Duration.Companion.seconds
 
 class BasicReforgeDetection {
@@ -36,7 +37,7 @@ class BasicReforgeDetection {
 	@SubscribeEvent
 	fun onReforgeClick(event: GuiClickEvent) {
 		val slot = event.slotIn ?: return
-		val displayName = slot.inventory.displayName.unformattedText
+		val displayName = event.screenName
 		if (!displayName.unformattedString().contains("Reforge Item") &&
 			!displayName.unformattedString().startsWith("The Hex")
 		) return

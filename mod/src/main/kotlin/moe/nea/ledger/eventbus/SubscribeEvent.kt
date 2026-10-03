@@ -4,4 +4,6 @@ package moe.nea.ledger.eventbus
 @Target(
 	AnnotationTarget.FUNCTION
 )
-annotation class SubscribeEvent
+annotation class SubscribeEvent(
+	val priority: EventPriority = EventPriority.NORMAL
+)

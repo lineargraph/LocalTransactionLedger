@@ -35,9 +35,9 @@ abstract class ChestDetection {
 			.mapNotNull { inventory.getStackInSlot(it) }
 			.filter { it.item != Item.getItemFromBlock(Blocks.stained_glass_pane) }
 			.map {
-				it.getInternalId()?.withStackSize(it.stackSize)
+				it.getInternalId()?.withcount(it.count)
 					?: itemIdProvider.findStackableItemByName(it.displayName)
-					?: ItemId.NIL.withStackSize(it.stackSize)
+					?: ItemId.NIL.withcount(it.count)
 			}
 		return ChestCost(
 			cost.map { ItemChange.lose(it.first, it.second) } + gain.map { ItemChange.gain(it.first, it.second) },

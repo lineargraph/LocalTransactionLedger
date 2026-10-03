@@ -13,6 +13,7 @@ import moe.nea.ledger.parseShortNumber
 import moe.nea.ledger.useMatcher
 import moe.nea.ledger.utils.di.Inject
 import moe.nea.ledger.eventbus.SubscribeEvent
+import moe.nea.ledger.events.TickEvent
 import net.minecraftforge.fml.common.gameevent.TickEvent
 import kotlin.time.Duration.Companion.seconds
 

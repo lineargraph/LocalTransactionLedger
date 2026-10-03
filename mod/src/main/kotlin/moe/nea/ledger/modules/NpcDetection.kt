@@ -37,11 +37,11 @@ class NpcDetection @Inject constructor(val ledger: LedgerLogger, val ids: ItemId
 
 	@SubscribeEvent
 	fun onClick(event: BeforeGuiAction) {
-		(event.chestSlots?.lowerChestInventory?.asIterable() ?: listOf())
-			.filterNotNull().forEach {
+		(event.chestSlots ?: listOf())
+			.forEach {
 				val name = it.getDisplayNameU().unformattedString()
 				val id = it.getInternalId() ?: return@forEach
-				val count = it.stackSize
+				val count = it.count
 				val cost = ids.findCostItemsFromSpan(it.getLore())
 				storedPurchases[name] = listOf(ItemChange.gain(id, count)) + cost.map { ItemChange.unpairLose(it) }
 			}

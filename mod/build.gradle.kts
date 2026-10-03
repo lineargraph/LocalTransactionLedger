@@ -163,5 +163,6 @@ tasks.runClient {
 
 buildConfig {
 	packageName("moe.nea.ledger.gen")
+	buildConfigField("MODID", modid)
 }
 
