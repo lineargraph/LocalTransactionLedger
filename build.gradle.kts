@@ -16,12 +16,12 @@ allprojects {
 }
 
 fun cmd(vararg args: String): String {
-	val baos = ByteArrayOutputStream()
-	exec {
-		standardOutput = baos
-		commandLine(*args)
-	}
-	return baos.toByteArray().decodeToString().trim()
+	val proc = ProcessBuilder()
+		.redirectOutput(ProcessBuilder.Redirect.PIPE)
+		.command(*args)
+		.start()
+	proc.waitFor()
+	return proc.inputStream.readAllBytes().decodeToString().trim()
 }
 
 val gitVersion = cmd("git", "rev-parse", "--short", "HEAD")
