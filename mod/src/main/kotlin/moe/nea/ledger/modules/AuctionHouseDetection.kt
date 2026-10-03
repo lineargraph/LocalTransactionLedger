@@ -18,7 +18,7 @@ import moe.nea.ledger.useMatcher
 import moe.nea.ledger.utils.di.Inject
 import net.minecraft.client.gui.inventory.GuiChest
 import net.minecraft.inventory.ContainerChest
-import net.minecraftforge.fml.common.eventhandler.SubscribeEvent
+import moe.nea.ledger.eventbus.SubscribeEvent
 import java.util.regex.Pattern
 import kotlin.time.Duration.Companion.seconds
 

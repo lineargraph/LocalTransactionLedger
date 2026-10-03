@@ -8,7 +8,7 @@ import moe.nea.ledger.utils.network.Request
 import moe.nea.ledger.utils.network.RequestUtil
 import net.minecraftforge.common.MinecraftForge
 import net.minecraftforge.fml.common.eventhandler.Event
-import net.minecraftforge.fml.common.eventhandler.SubscribeEvent
+import moe.nea.ledger.eventbus.SubscribeEvent
 import java.util.concurrent.CompletableFuture
 
 class ExternalDataProvider @Inject constructor(

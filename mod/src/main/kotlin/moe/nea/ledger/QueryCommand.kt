@@ -8,14 +8,14 @@ import moe.nea.ledger.database.DBLogEntry
 import moe.nea.ledger.database.Database
 import moe.nea.ledger.utils.ULIDWrapper
 import moe.nea.ledger.utils.di.Inject
-import net.minecraft.command.CommandBase
+import net.minecraft.command.LedgerCommand
 import net.minecraft.command.ICommandSender
 import net.minecraft.util.BlockPos
 import net.minecraft.util.ChatComponentText
 import net.minecraft.util.ChatStyle
 import net.minecraft.util.EnumChatFormatting
 
-class QueryCommand : CommandBase() {
+class QueryCommand : LedgerCommand() {
 	override fun canCommandSenderUseCommand(sender: ICommandSender?): Boolean {
 		return true
 	}

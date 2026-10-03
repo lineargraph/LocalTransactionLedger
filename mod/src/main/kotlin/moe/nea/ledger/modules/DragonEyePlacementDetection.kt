@@ -9,7 +9,7 @@ import moe.nea.ledger.events.WorldSwitchEvent
 import moe.nea.ledger.gen.ItemIds
 import moe.nea.ledger.useMatcher
 import moe.nea.ledger.utils.di.Inject
-import net.minecraftforge.fml.common.eventhandler.SubscribeEvent
+import moe.nea.ledger.eventbus.SubscribeEvent
 
 class DragonEyePlacementDetection {
 	val eyePlaced = "☬ You placed a Summoning Eye!( Brace yourselves!)? \\(./.\\)".toPattern()

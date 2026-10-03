@@ -2,7 +2,7 @@ package moe.nea.ledger.utils
 
 import moe.nea.ledger.events.ChatReceived
 import moe.nea.ledger.utils.di.Inject
-import net.minecraftforge.fml.common.eventhandler.SubscribeEvent
+import moe.nea.ledger.eventbus.SubscribeEvent
 
 abstract class BorderedTextTracker {
 

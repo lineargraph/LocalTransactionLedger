@@ -12,7 +12,7 @@ import net.minecraft.nbt.NBTTagCompound
 import net.minecraftforge.client.event.GuiScreenEvent
 import net.minecraftforge.common.MinecraftForge
 import net.minecraftforge.fml.common.eventhandler.EventPriority
-import net.minecraftforge.fml.common.eventhandler.SubscribeEvent
+import moe.nea.ledger.eventbus.SubscribeEvent
 import org.lwjgl.input.Mouse
 
 class ItemIdProvider {

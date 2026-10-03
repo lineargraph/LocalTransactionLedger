@@ -12,7 +12,7 @@ import moe.nea.ledger.getInternalId
 import moe.nea.ledger.unformattedString
 import moe.nea.ledger.utils.di.Inject
 import net.minecraft.client.Minecraft
-import net.minecraftforge.fml.common.eventhandler.SubscribeEvent
+import moe.nea.ledger.eventbus.SubscribeEvent
 import java.time.Instant
 
 class CaducousFeederDetection {

@@ -19,7 +19,7 @@ import moe.nea.ledger.unformattedString
 import moe.nea.ledger.useMatcher
 import moe.nea.ledger.utils.ErrorUtil
 import moe.nea.ledger.utils.di.Inject
-import net.minecraftforge.fml.common.eventhandler.SubscribeEvent
+import moe.nea.ledger.eventbus.SubscribeEvent
 import java.util.regex.Pattern
 
 class NpcDetection @Inject constructor(val ledger: LedgerLogger, val ids: ItemIdProvider) {

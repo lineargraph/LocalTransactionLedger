@@ -52,6 +52,7 @@ import moe.nea.ledger.utils.di.DI
 import moe.nea.ledger.utils.di.DIProvider
 import moe.nea.ledger.utils.network.RequestUtil
 import net.fabricmc.api.ClientModInitializer
+import net.fabricmc.fabric.api.client.command.v2.ClientCommands
 import net.fabricmc.fabric.api.client.event.lifecycle.v1.ClientLifecycleEvents
 import net.fabricmc.fabric.api.client.event.lifecycle.v1.ClientTickEvents
 import net.fabricmc.fabric.api.client.message.v1.ClientReceiveMessageEvents
@@ -172,8 +173,6 @@ class Ledger : ClientModInitializer {
 		errorUtil.catch {
 			di.instantiateAll()
 			di.getAllInstances().forEach { LedgerEventBus.subscribeAll(it) }
-			di.getAllInstances().filterIsInstance<ICommand>()
-				.forEach { ClientCommandHandler.instance.registerCommand(it) }
 		}
 
 		errorUtil.catch {

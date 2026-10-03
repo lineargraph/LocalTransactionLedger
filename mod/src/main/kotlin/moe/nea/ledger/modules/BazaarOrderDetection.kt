@@ -13,7 +13,7 @@ import moe.nea.ledger.useMatcher
 import moe.nea.ledger.utils.di.Inject
 import net.minecraft.client.gui.inventory.GuiEditSign
 import net.minecraftforge.client.event.GuiScreenEvent
-import net.minecraftforge.fml.common.eventhandler.SubscribeEvent
+import moe.nea.ledger.eventbus.SubscribeEvent
 import java.util.regex.Pattern
 
 class BazaarOrderDetection @Inject constructor(val ledger: LedgerLogger, val ids: ItemIdProvider) {

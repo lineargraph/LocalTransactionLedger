@@ -1,13 +1,13 @@
 package moe.nea.ledger
 
 import moe.nea.ledger.events.TriggerEvent
-import net.minecraft.command.CommandBase
+import net.minecraft.command.LedgerCommand
 import net.minecraft.command.ICommandSender
 import net.minecraft.event.ClickEvent
 import net.minecraft.util.ChatComponentText
 import net.minecraftforge.common.MinecraftForge
 
-class TriggerCommand : CommandBase() {
+class TriggerCommand : LedgerCommand() {
 	fun getTriggerCommandLine(trigger: String): ClickEvent {
 		return ClickEvent(ClickEvent.Action.RUN_COMMAND, "/${commandName} $trigger")
 	}
