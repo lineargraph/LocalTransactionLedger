@@ -8,13 +8,13 @@ jobs:
         runs-on: ubuntu-latest
         steps:
             -   name: Checkout source
-                uses: actions/checkout@v4.1.1
+                uses: actions/checkout@v7
 
             -   name: Setup Java
                 uses: actions/setup-java@v4.0.0
                 with:
                     distribution: temurin
-                    java-version: 17
+                    java-version: 21
             -   name: Setup PNPM
                 uses: pnpm/action-setup@v4
                 with:
@@ -49,7 +49,7 @@ jobs:
             group: nightly-release
         steps:
             -   name: Set repository context
-                uses: actions/checkout@v4
+                uses: actions/checkout@v7
             -   name: Download artifact
                 uses: actions/download-artifact@v4
                 with:
