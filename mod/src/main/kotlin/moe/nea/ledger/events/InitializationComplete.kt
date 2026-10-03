@@ -1,6 +1,10 @@
 package moe.nea.ledger.events
 
-import net.minecraftforge.fml.common.eventhandler.Event
+import com.google.gson.JsonElement
 
-class InitializationComplete : Event() {
+
+class InitializationComplete : LedgerEvent() {
+	override fun serialize(): JsonElement {
+		TODO("Not yet implemented")
+	}
 }

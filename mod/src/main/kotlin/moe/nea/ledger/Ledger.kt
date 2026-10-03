@@ -11,6 +11,7 @@ import moe.nea.ledger.eventbus.LedgerEventBus
 import moe.nea.ledger.events.ChatReceived
 import moe.nea.ledger.events.LateWorldLoadEvent
 import moe.nea.ledger.events.RegistrationFinishedEvent
+import moe.nea.ledger.events.TickEvent
 import moe.nea.ledger.events.WorldSwitchEvent
 import moe.nea.ledger.gen.BuildConfig
 import moe.nea.ledger.modules.AccessorySwapperDetection
@@ -51,6 +52,8 @@ import moe.nea.ledger.utils.di.DI
 import moe.nea.ledger.utils.di.DIProvider
 import moe.nea.ledger.utils.network.RequestUtil
 import net.fabricmc.api.ClientModInitializer
+import net.fabricmc.fabric.api.client.event.lifecycle.v1.ClientLifecycleEvents
+import net.fabricmc.fabric.api.client.event.lifecycle.v1.ClientTickEvents
 import net.fabricmc.fabric.api.client.message.v1.ClientReceiveMessageEvents
 import net.minecraft.client.Minecraft
 import net.minecraft.network.chat.Component
@@ -180,6 +183,13 @@ class Ledger : ClientModInitializer {
 		RegistrationFinishedEvent().post()
 	}
 
+	fun registerTickEvent() {
+		var currentTick = 0
+		ClientTickEvents.END_CLIENT_TICK.register(ClientTickEvents.EndTick { instance ->
+			TickEvent(currentTick++).post()
+		})
+	}
+
 	var lastJoin = -1L
 
 	@SubscribeEvent
@@ -191,14 +201,14 @@ class Ledger : ClientModInitializer {
 	}
 
 	@SubscribeEvent
-	fun tickEvent(event: ClientTickEvent) {
-		if (event.phase == TickEvent.Phase.END
-			&& lastJoin > 0
+	fun onTick(tickEvent: TickEvent) {
+
+		if (lastJoin > 0
 			&& System.currentTimeMillis() - lastJoin > 10_000
-			&& Minecraft.getMinecraft().thePlayer != null
+			&& Minecraft.getInstance().player != null
 		) {
 			lastJoin = -1
-			MinecraftForge.EVENT_BUS.post(LateWorldLoadEvent())
+			LateWorldLoadEvent().post()
 		}
 		while (true) {
 			val queued = tickQueue.poll() ?: break

@@ -1,7 +1,7 @@
 package moe.nea.ledger
 
-import net.minecraft.launchwrapper.Launch
+import net.fabricmc.loader.api.FabricLoader
 
 object DevUtil {
-	val isDevEnv = Launch.blackboard["fml.deobfuscatedEnvironment"] as Boolean
+	val isDevEnv = FabricLoader.getInstance().isDevelopmentEnvironment
 }

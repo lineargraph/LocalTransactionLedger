@@ -105,16 +105,16 @@ class QueryCommand : CommandBase() {
 				.where(Clause { column(DBItemEntry.transactionId) eq string(transactionId.wrapped) })
 				.map { DBItemEntry.objMap(it) }
 			val text = ChatComponentText("")
-				.setChatStyle(ChatStyle().setColor(EnumChatFormatting.YELLOW))
+				.setChatStyle(ChatStyle().withColor(EnumChatFormatting.YELLOW))
 				.appendSibling(
 					ChatComponentText(type.name)
-						.setChatStyle(ChatStyle().setColor(EnumChatFormatting.GREEN))
+						.setChatStyle(ChatStyle().withColor(EnumChatFormatting.GREEN))
 				)
 				.appendText(" on ")
 				.appendSibling(timestamp.formatChat())
 				.appendText("\n")
 				.appendSibling(
-					ChatComponentText(transactionId.wrapped).setChatStyle(ChatStyle().setColor(EnumChatFormatting.DARK_GRAY))
+					ChatComponentText(transactionId.wrapped).setChatStyle(ChatStyle().withColor(EnumChatFormatting.DARK_GRAY))
 				)
 			for (item in items) {
 				text.appendText("\n")

@@ -1,6 +1,9 @@
 package moe.nea.ledger.events
 
-import net.minecraftforge.fml.common.eventhandler.Event
+import com.google.gson.JsonElement
 
-class WorldSwitchEvent : Event() {
+class WorldSwitchEvent : LedgerEvent() {
+	override fun serialize(): JsonElement {
+		TODO("Not yet implemented")
+	}
 }

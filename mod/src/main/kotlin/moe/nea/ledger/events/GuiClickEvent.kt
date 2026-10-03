@@ -1,9 +1,12 @@
 package moe.nea.ledger.events
 
-import net.minecraft.inventory.Slot
-import net.minecraftforge.fml.common.eventhandler.Event
+import com.google.gson.JsonElement
+import net.minecraft.world.inventory.Slot
 
 data class GuiClickEvent(
-    val slotIn: Slot?, val slotId: Int, val clickedButton: Int, val clickType: Int
-) : Event() {
+	val slotIn: Slot?, val slotId: Int, val clickedButton: Int, val clickType: Int
+) : LedgerEvent() {
+	override fun serialize(): JsonElement {
+		TODO("Not yet implemented")
+	}
 }
