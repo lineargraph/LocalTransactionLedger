@@ -9,7 +9,7 @@ import moe.nea.ledger.events.GuiClickEvent
 import moe.nea.ledger.getInternalId
 import moe.nea.ledger.utils.di.Inject
 import net.minecraft.client.Minecraft
-import net.minecraftforge.fml.common.eventhandler.SubscribeEvent
+import moe.nea.ledger.eventbus.SubscribeEvent
 
 class KuudraChestDetection : ChestDetection() {
 	// TODO: extra essence for kuudra pet (how?), item SALVAGE detection
@@ -23,20 +23,20 @@ class KuudraChestDetection : ChestDetection() {
 	@Inject
 	lateinit var minecraft: Minecraft
 	fun hasKey(keyItem: ItemId): Boolean {
-		val p = minecraft.thePlayer ?: return false
-		return p.inventory.mainInventory.any { it?.getInternalId() == keyItem }
+		val p = minecraft.player ?: return false
+		return p.inventory.any { it.getInternalId() == keyItem }
 	}
 
 	@SubscribeEvent
 	fun onRewardChestClick(event: GuiClickEvent) {
-		val diffs = scrapeChestReward(event.slotIn ?: return) ?: return
+		val diffs = scrapeChestReward(event) ?: return
 		val requiredKey = diffs.diff.find {
 			it.direction == ItemChange.ChangeDirection.LOST && kuudraKeyPattern.asPredicate().test(it.itemId.string)
 		}?.itemId
 		if (requiredKey != null && !hasKey(requiredKey)) {
 			return
 		}
-		if (requiredKey == null && event.slotIn.inventory.name != "Free Chest") {
+		if (requiredKey == null && event.screenName != "Free Chest") {
 			return
 		}
 		log.logEntry(LedgerEntry(

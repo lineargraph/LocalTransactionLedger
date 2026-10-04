@@ -3,13 +3,19 @@ package moe.nea.ledger
 import com.google.gson.Gson
 import io.github.notenoughupdates.moulconfig.Config
 import io.github.notenoughupdates.moulconfig.managed.ManagedConfig
+import java.io.File
+import java.util.concurrent.ConcurrentLinkedQueue
 import moe.nea.ledger.config.LedgerConfig
 import moe.nea.ledger.config.UpdateUi
 import moe.nea.ledger.config.UpdateUiMarker
 import moe.nea.ledger.database.Database
+import moe.nea.ledger.eventbus.LedgerEventBus
+import moe.nea.ledger.eventbus.SubscribeEvent
 import moe.nea.ledger.events.ChatReceived
 import moe.nea.ledger.events.LateWorldLoadEvent
 import moe.nea.ledger.events.RegistrationFinishedEvent
+import moe.nea.ledger.events.ScreenOpenEvent
+import moe.nea.ledger.events.TickEvent
 import moe.nea.ledger.events.WorldSwitchEvent
 import moe.nea.ledger.gen.BuildConfig
 import moe.nea.ledger.modules.AccessorySwapperDetection
@@ -49,24 +55,16 @@ import moe.nea.ledger.utils.MinecraftExecutor
 import moe.nea.ledger.utils.di.DI
 import moe.nea.ledger.utils.di.DIProvider
 import moe.nea.ledger.utils.network.RequestUtil
+import net.fabricmc.api.ClientModInitializer
+import net.fabricmc.fabric.api.client.event.lifecycle.v1.ClientLevelEvents
+import net.fabricmc.fabric.api.client.event.lifecycle.v1.ClientTickEvents
+import net.fabricmc.fabric.api.client.message.v1.ClientReceiveMessageEvents
+import net.fabricmc.fabric.api.client.screen.v1.ScreenEvents
 import net.minecraft.client.Minecraft
-import net.minecraft.command.ICommand
-import net.minecraftforge.client.ClientCommandHandler
-import net.minecraftforge.client.event.ClientChatReceivedEvent
-import net.minecraftforge.common.MinecraftForge
-import net.minecraftforge.event.entity.EntityJoinWorldEvent
-import net.minecraftforge.fml.common.Mod
-import net.minecraftforge.fml.common.event.FMLInitializationEvent
-import net.minecraftforge.fml.common.eventhandler.EventPriority
-import net.minecraftforge.fml.common.eventhandler.SubscribeEvent
-import net.minecraftforge.fml.common.gameevent.TickEvent
-import net.minecraftforge.fml.common.gameevent.TickEvent.ClientTickEvent
+import net.minecraft.network.chat.Component
 import org.apache.logging.log4j.LogManager
-import java.io.File
-import java.util.concurrent.ConcurrentLinkedQueue
 
-@Mod(modid = "ledger", useMetadata = true, version = BuildConfig.VERSION)
-class Ledger {
+class Ledger : ClientModInitializer {
 	/*
 	You have withdrawn 1M coins! You now have 518M coins in your account!
 	You have deposited 519M coins! You now have 519M coins in your account!
@@ -119,13 +117,14 @@ class Ledger {
 		fun leakDI() = di
 	}
 
-	@Mod.EventHandler
-	fun init(event: FMLInitializationEvent) {
+	override fun onInitializeClient() {
 		logger.info("Initializing ledger")
+
+		registerEvents()
 
 		TelemetryProvider.setupFor(di)
 		di.registerSingleton(this)
-		di.registerSingleton(Minecraft.getMinecraft())
+		di.registerSingleton(Minecraft.getInstance())
 		di.registerSingleton(gson)
 		di.register(LedgerConfig::class.java, DIProvider { managedConfig.instance })
 		di.register(Config::class.java, DIProvider.fromInheritance(LedgerConfig::class.java))
@@ -176,37 +175,57 @@ class Ledger {
 		val errorUtil = di.provide<ErrorUtil>()
 		errorUtil.catch {
 			di.instantiateAll()
-			di.getAllInstances().forEach(MinecraftForge.EVENT_BUS::register)
-			di.getAllInstances().filterIsInstance<ICommand>()
-				.forEach { ClientCommandHandler.instance.registerCommand(it) }
+			di.getAllInstances().forEach { LedgerEventBus.subscribeAll(it) }
 		}
 
 		errorUtil.catch {
 			di.provide<Database>().loadAndUpgrade()
 		}
 
-		MinecraftForge.EVENT_BUS.post(RegistrationFinishedEvent())
+		RegistrationFinishedEvent().post()
+	}
+
+	fun registerEvents() {
+		registerChatEvent()
+		registerTickEvent()
+		registerScreenEvents()
+		registerJoinEvent()
+	}
+
+	fun registerScreenEvents() {
+		ScreenEvents.AFTER_INIT.register { minecraft, screen, i, i1 ->
+			ScreenOpenEvent(screen).post()
+			ScreenEvents.remove(screen).register {
+
+			}
+		}
+	}
+
+	fun registerTickEvent() {
+		var currentTick = 0
+		ClientTickEvents.END_CLIENT_TICK.register(ClientTickEvents.EndTick { instance ->
+			TickEvent(currentTick++).post()
+		})
 	}
 
 	var lastJoin = -1L
 
-	@SubscribeEvent
-	fun worldSwitchEvent(event: EntityJoinWorldEvent) {
-		if (event.entity == Minecraft.getMinecraft().thePlayer) {
+	fun registerJoinEvent() {
+		ClientLevelEvents.AFTER_CLIENT_LEVEL_CHANGE.register { minecraft, level ->
+			// TODO: originally this used an entity join world event, if there are issues perhaps change back to this
 			lastJoin = System.currentTimeMillis()
-			MinecraftForge.EVENT_BUS.post(WorldSwitchEvent())
+			WorldSwitchEvent().post()
 		}
 	}
 
 	@SubscribeEvent
-	fun tickEvent(event: ClientTickEvent) {
-		if (event.phase == TickEvent.Phase.END
-			&& lastJoin > 0
+	fun onTick(tickEvent: TickEvent) {
+		if (lastJoin > 0
 			&& System.currentTimeMillis() - lastJoin > 10_000
-			&& Minecraft.getMinecraft().thePlayer != null
+			&& Minecraft.getInstance().player != null
 		) {
 			lastJoin = -1
-			MinecraftForge.EVENT_BUS.post(LateWorldLoadEvent())
+			LateWorldLoadEvent().post()
 		}
 		while (true) {
 			val queued = tickQueue.poll() ?: break
@@ -214,9 +233,29 @@ class Ledger {
 		}
 	}
 
-	@SubscribeEvent(receiveCanceled = true, priority = EventPriority.HIGHEST)
-	fun onChat(event: ClientChatReceivedEvent) {
-		if (event.type != 2.toByte())
-			MinecraftForge.EVENT_BUS.post(ChatReceived(event))
+	fun registerChatEvent() {
+		var lastReceivedMessage: Component? = null
+		ClientReceiveMessageEvents.ALLOW_CHAT.register(ClientReceiveMessageEvents.AllowChat { message, signedMessage, sender, params, receptionTimestamp ->
+			lastReceivedMessage = message
+			ChatReceived(message).post()
+			true
+		})
+		ClientReceiveMessageEvents.ALLOW_GAME.register(ClientReceiveMessageEvents.AllowGame { message, overlay ->
+			lastReceivedMessage = message
+			if (!overlay)
+				ChatReceived(message).post()
+			true
+		})
+		ClientReceiveMessageEvents.GAME_CANCELED.register(ClientReceiveMessageEvents.GameCanceled { message, overlay ->
+			if (!overlay && lastReceivedMessage !== message) {
+				ChatReceived(message).post()
+			}
+		})
+		ClientReceiveMessageEvents.CHAT_CANCELED.register(ClientReceiveMessageEvents.ChatCanceled { message, signedMessage, sender, params, receptionTimestamp ->
+			if (lastReceivedMessage !== message) {
+				ChatReceived(message).post()
+			}
+		})
 	}
+
 }

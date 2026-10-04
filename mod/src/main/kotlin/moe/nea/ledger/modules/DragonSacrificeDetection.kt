@@ -1,5 +1,6 @@
 package moe.nea.ledger.modules
 
+import kotlin.time.Duration.Companion.seconds
 import moe.nea.ledger.DebouncedValue
 import moe.nea.ledger.ItemChange
 import moe.nea.ledger.ItemIdProvider
@@ -7,14 +8,13 @@ import moe.nea.ledger.LedgerEntry
 import moe.nea.ledger.LedgerLogger
 import moe.nea.ledger.SHORT_NUMBER_PATTERN
 import moe.nea.ledger.TransactionType
+import moe.nea.ledger.eventbus.SubscribeEvent
 import moe.nea.ledger.events.ChatReceived
+import moe.nea.ledger.events.TickEvent
 import moe.nea.ledger.gen.ItemIds
 import moe.nea.ledger.parseShortNumber
 import moe.nea.ledger.useMatcher
 import moe.nea.ledger.utils.di.Inject
-import net.minecraftforge.fml.common.eventhandler.SubscribeEvent
-import net.minecraftforge.fml.common.gameevent.TickEvent
-import kotlin.time.Duration.Companion.seconds
 
 class DragonSacrificeDetection {
 	//SACRIFICE! You turned Holy Dragon Boots into 30 Dragon Essence!

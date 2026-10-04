@@ -1,5 +1,7 @@
 package moe.nea.ledger
 
+import moe.nea.ledger.eventbus.EventPriority
+import moe.nea.ledger.eventbus.SubscribeEvent
 import moe.nea.ledger.events.BeforeGuiAction
 import moe.nea.ledger.events.ExtraSupplyIdEvent
 import moe.nea.ledger.events.RegistrationFinishedEvent
@@ -7,26 +9,15 @@ import moe.nea.ledger.events.SupplyDebugInfo
 import moe.nea.ledger.gen.ItemIds
 import moe.nea.ledger.modules.ExternalDataProvider
 import net.minecraft.client.Minecraft
-import net.minecraft.item.ItemStack
-import net.minecraft.nbt.NBTTagCompound
-import net.minecraftforge.client.event.GuiScreenEvent
-import net.minecraftforge.common.MinecraftForge
-import net.minecraftforge.fml.common.eventhandler.EventPriority
-import net.minecraftforge.fml.common.eventhandler.SubscribeEvent
-import org.lwjgl.input.Mouse
+import net.minecraft.world.item.ItemStack
 
 class ItemIdProvider {
-
-	@SubscribeEvent
-	fun onMouseInput(event: GuiScreenEvent.MouseInputEvent.Pre) {
-		if (Mouse.getEventButton() == -1) return
-		BeforeGuiAction(event.gui).post()
-	}
-
-	@SubscribeEvent
-	fun onKeyInput(event: GuiScreenEvent.KeyboardInputEvent.Pre) {
-		BeforeGuiAction(event.gui).post()
-	}
+//
+//	@SubscribeEvent
+//	fun onMouseInput(event: GuiScreenEvent.MouseInputEvent.Pre) {
+//		if (Mouse.getEventButton() == -1) return
+//		BeforeGuiAction(event.gui).post()
+//	}
 
 	private val knownNames = mutableMapOf<String, ItemId>()
 
@@ -47,15 +38,13 @@ class ItemIdProvider {
 
 	@SubscribeEvent
 	fun onRegistrationFinished(event: RegistrationFinishedEvent) {
-		MinecraftForge.EVENT_BUS.post(ExtraSupplyIdEvent(::saveKnownItem))
+		ExtraSupplyIdEvent(::saveKnownItem).post()
 	}
 
 	@SubscribeEvent(priority = EventPriority.HIGH)
 	fun savePlayerInventoryIds(event: BeforeGuiAction) {
-		val player = Minecraft.getMinecraft().thePlayer ?: return
-		val inventory = player.inventory ?: return
-		inventory.mainInventory?.forEach { saveFromSlot(it) }
-		inventory.armorInventory?.forEach { saveFromSlot(it) }
+		val player = Minecraft.getInstance().player ?: return
+		player.inventory.forEach { saveFromSlot(it) }
 	}
 
 	@SubscribeEvent
@@ -65,9 +54,7 @@ class ItemIdProvider {
 
 	fun saveFromSlot(stack: ItemStack?, preprocessName: (String) -> String = { it }) {
 		if (stack == null) return
-		val nbt = stack.tagCompound ?: NBTTagCompound()
-		val display = nbt.getCompoundTag("display")
-		var name = display.getString("Name").unformattedString()
+		var name = stack.getDisplayNameU()
 		name = preprocessName(name)
 		name = name.trim()
 		val id = stack.getInternalId()
@@ -79,15 +66,15 @@ class ItemIdProvider {
 	@SubscribeEvent(priority = EventPriority.HIGH)
 	fun saveChestInventoryIds(event: BeforeGuiAction) {
 		val slots = event.chestSlots ?: return
-		val chestName = slots.lowerChestInventory.name.unformattedString()
+		val chestName = event.screenName
 		val isOrderMenu = chestName == "Your Bazaar Orders" || chestName == "Co-op Bazaar Orders"
 		val preprocessor: (String) -> String = if (isOrderMenu) {
 			{ it.removePrefix("BUY ").removePrefix("SELL ") }
 		} else {
 			{ it }
 		}
-		slots.inventorySlots.forEach {
-			saveFromSlot(it?.stack, preprocessor)
+		slots.forEach {
+			saveFromSlot(it, preprocessor)
 		}
 	}
 
@@ -154,8 +141,10 @@ class ItemIdProvider {
 			return Pair(id, parseShortNumber(group("amount")))
 		}
 		essenceRegex.useMatcher(properName) {
-			return Pair(ItemId("ESSENCE_${group("essence").uppercase()}"),
-			            parseShortNumber(group("count")))
+			return Pair(
+				ItemId("ESSENCE_${group("essence").uppercase()}"),
+				parseShortNumber(group("count"))
+			)
 		}
 		stackedItemRegex.useMatcher(properName) {
 			val item = findForName(group("name"), fallbackToGenerated)

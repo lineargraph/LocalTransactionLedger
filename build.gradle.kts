@@ -2,12 +2,12 @@ import com.github.gmazzo.buildconfig.BuildConfigExtension
 import java.io.ByteArrayOutputStream
 
 plugins {
-	val kotlinVersion = "2.0.21"
+	val kotlinVersion = "2.4.10"
 	kotlin("jvm") version kotlinVersion apply false
 	kotlin("plugin.serialization") version kotlinVersion apply false
 	id("com.github.gmazzo.buildconfig") version "5.5.0" apply false
 	id("ledger-globals")
-	id("com.google.devtools.ksp") version "2.0.21-1.0.26" apply false
+	id("com.google.devtools.ksp") version "2.3.12" apply false
 	id("com.github.johnrengelman.shadow") version "8.1.1" apply false
 }
 
@@ -16,12 +16,12 @@ allprojects {
 }
 
 fun cmd(vararg args: String): String {
-	val baos = ByteArrayOutputStream()
-	exec {
-		standardOutput = baos
-		commandLine(*args)
-	}
-	return baos.toByteArray().decodeToString().trim()
+	val proc = ProcessBuilder()
+		.redirectOutput(ProcessBuilder.Redirect.PIPE)
+		.command(*args)
+		.start()
+	proc.waitFor()
+	return proc.inputStream.readAllBytes().decodeToString().trim()
 }
 
 val gitVersion = cmd("git", "rev-parse", "--short", "HEAD")

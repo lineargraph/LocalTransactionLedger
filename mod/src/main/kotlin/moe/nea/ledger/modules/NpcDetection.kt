@@ -1,5 +1,6 @@
 package moe.nea.ledger.modules
 
+import java.util.regex.Pattern
 import moe.nea.ledger.ItemChange
 import moe.nea.ledger.ItemId
 import moe.nea.ledger.ItemIdProvider
@@ -7,7 +8,7 @@ import moe.nea.ledger.LedgerEntry
 import moe.nea.ledger.LedgerLogger
 import moe.nea.ledger.SHORT_NUMBER_PATTERN
 import moe.nea.ledger.TransactionType
-import moe.nea.ledger.asIterable
+import moe.nea.ledger.eventbus.SubscribeEvent
 import moe.nea.ledger.events.BeforeGuiAction
 import moe.nea.ledger.events.ChatReceived
 import moe.nea.ledger.events.ExtraSupplyIdEvent
@@ -19,8 +20,6 @@ import moe.nea.ledger.unformattedString
 import moe.nea.ledger.useMatcher
 import moe.nea.ledger.utils.ErrorUtil
 import moe.nea.ledger.utils.di.Inject
-import net.minecraftforge.fml.common.eventhandler.SubscribeEvent
-import java.util.regex.Pattern
 
 class NpcDetection @Inject constructor(val ledger: LedgerLogger, val ids: ItemIdProvider) {
 
@@ -37,11 +36,11 @@ class NpcDetection @Inject constructor(val ledger: LedgerLogger, val ids: ItemId
 
 	@SubscribeEvent
 	fun onClick(event: BeforeGuiAction) {
-		(event.chestSlots?.lowerChestInventory?.asIterable() ?: listOf())
-			.filterNotNull().forEach {
+		(event.chestSlots ?: listOf())
+			.forEach {
 				val name = it.getDisplayNameU().unformattedString()
 				val id = it.getInternalId() ?: return@forEach
-				val count = it.stackSize
+				val count = it.count
 				val cost = ids.findCostItemsFromSpan(it.getLore())
 				storedPurchases[name] = listOf(ItemChange.gain(id, count)) + cost.map { ItemChange.unpairLose(it) }
 			}

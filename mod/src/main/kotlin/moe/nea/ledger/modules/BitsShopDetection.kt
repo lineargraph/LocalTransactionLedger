@@ -15,7 +15,8 @@ import moe.nea.ledger.parseShortNumber
 import moe.nea.ledger.unformattedString
 import moe.nea.ledger.useMatcher
 import moe.nea.ledger.utils.di.Inject
-import net.minecraftforge.fml.common.eventhandler.SubscribeEvent
+import moe.nea.ledger.eventbus.SubscribeEvent
+import moe.nea.ledger.utils.MigrationUtil.stack
 import java.time.Instant
 
 class BitsShopDetection @Inject constructor(val ledger: LedgerLogger) {
@@ -23,7 +24,7 @@ class BitsShopDetection @Inject constructor(val ledger: LedgerLogger) {
 
     data class BitShopEntry(
 	    val id: ItemId,
-	    val stackSize: Int,
+	    val count: Int,
 	    val bitPrice: Int,
 	    val timestamp: Long = System.currentTimeMillis()
     )
@@ -34,7 +35,7 @@ class BitsShopDetection @Inject constructor(val ledger: LedgerLogger) {
     @SubscribeEvent
     fun recordLastBitPrice(event: GuiClickEvent) {
         val slot = event.slotIn ?: return
-        val name = slot.inventory.displayName.unformattedText.unformattedString()
+        val name = event.screenName
         if (name != "Community Shop" && !name.startsWith("Bits Shop"))
             return
         val stack = slot.stack ?: return
@@ -42,7 +43,7 @@ class BitsShopDetection @Inject constructor(val ledger: LedgerLogger) {
         val bitPrice = stack.getLore()
             .firstNotNullOfOrNull { bitCostPattern.useMatcher(it.unformattedString()) { parseShortNumber(group("cost")).toInt() } }
             ?: return
-        lastClickedBitShopItem = BitShopEntry(id, stack.stackSize, bitPrice)
+        lastClickedBitShopItem = BitShopEntry(id, stack.count, bitPrice)
     }
 
     @SubscribeEvent
@@ -56,7 +57,7 @@ class BitsShopDetection @Inject constructor(val ledger: LedgerLogger) {
 	                Instant.now(),
 	                listOf(
 		                ItemChange.lose(ItemIds.SKYBLOCK_BIT, lastBit.bitPrice.toDouble()),
-		                ItemChange.gain(lastBit.id, lastBit.stackSize)
+		                ItemChange.gain(lastBit.id, lastBit.count)
 					)
                 )
             )

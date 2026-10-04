@@ -1,5 +1,10 @@
 package moe.nea.ledger.events
 
-import net.minecraftforge.fml.common.eventhandler.Event
+import com.google.gson.JsonElement
+import com.google.gson.JsonNull
 
-class LateWorldLoadEvent : Event()
+class LateWorldLoadEvent : LedgerEvent() {
+	override fun serialize(): JsonElement {
+		return JsonNull.INSTANCE
+	}
+}

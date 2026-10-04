@@ -1,11 +1,7 @@
 package moe.nea.ledger
 
-import net.minecraft.event.ClickEvent
-import net.minecraft.event.HoverEvent
-import net.minecraft.util.ChatComponentText
-import net.minecraft.util.ChatStyle
-import net.minecraft.util.EnumChatFormatting
-import net.minecraft.util.IChatComponent
+import net.minecraft.network.chat.*
+import java.net.URI
 import java.time.Instant
 import java.time.LocalDateTime
 import java.time.ZoneId
@@ -102,51 +98,61 @@ val timeFormat: DateTimeFormatter = DateTimeFormatterBuilder()
 	.appendValue(ChronoField.SECOND_OF_MINUTE, 2)
 	.toFormatter()
 
-fun Instant.formatChat(): IChatComponent {
-	val text = ChatComponentText(
+fun Instant.formatChat(): Component {
+	val text = Component.literal(
 		LocalDateTime.ofInstant(this, ZoneId.systemDefault()).format(timeFormat)
 	)
-	text.setChatStyle(
-		ChatStyle()
-			.setChatClickEvent(
-				ClickEvent(ClickEvent.Action.OPEN_URL, "https://time.is/${this.epochSecond}"))
-			.setChatHoverEvent(
-				HoverEvent(HoverEvent.Action.SHOW_TEXT, ChatComponentText("Click to show on time.is")))
-			.setColor(EnumChatFormatting.AQUA))
+	text.style = Style.EMPTY
+		.withClickEvent(
+			ClickEvent.OpenUrl(URI("https://time.is/${this.epochSecond}"))
+		)
+		.withHoverEvent(
+			HoverEvent.ShowText(Component.literal("Click to show on time.is"))
+		)
+		.withColor(TextColor.AQUA)
 	return text
 }
 
 private val formatChatDirection = run {
-	fun ItemChange.ChangeDirection.formatChat0(): IChatComponent {
+	fun ItemChange.ChangeDirection.formatChat0(): Component {
 		val (text, color) = when (this) {
-			ItemChange.ChangeDirection.GAINED -> "+" to EnumChatFormatting.GREEN
-			ItemChange.ChangeDirection.TRANSFORM -> "~" to EnumChatFormatting.YELLOW
-			ItemChange.ChangeDirection.SYNC -> "=" to EnumChatFormatting.BLUE
-			ItemChange.ChangeDirection.CATALYST -> "*" to EnumChatFormatting.DARK_PURPLE
-			ItemChange.ChangeDirection.LOST -> "-" to EnumChatFormatting.RED
+			ItemChange.ChangeDirection.GAINED -> "+" to TextColor.GREEN
+			ItemChange.ChangeDirection.TRANSFORM -> "~" to TextColor.YELLOW
+			ItemChange.ChangeDirection.SYNC -> "=" to TextColor.BLUE
+			ItemChange.ChangeDirection.CATALYST -> "*" to TextColor.DARK_PURPLE
+			ItemChange.ChangeDirection.LOST -> "-" to TextColor.RED
 		}
-		return ChatComponentText(text)
-			.setChatStyle(
-				ChatStyle()
-					.setColor(color)
-					.setChatHoverEvent(HoverEvent(HoverEvent.Action.SHOW_TEXT,
-					                              ChatComponentText(name).setChatStyle(ChatStyle().setColor(color)))))
+		return Component.literal(text)
+			.setStyle(
+				Style.EMPTY
+					.withColor(color)
+					.withHoverEvent(
+						HoverEvent.ShowText(
+							Component.literal(name).setStyle(Style.EMPTY.withColor(color))
+						)
+					)
+			)
 	}
 	ItemChange.ChangeDirection.entries.associateWith { it.formatChat0() }
 }
 
-fun ItemChange.ChangeDirection.formatChat(): IChatComponent {
+fun ItemChange.ChangeDirection.formatChat(): Component {
 	return formatChatDirection[this]!!
 }
 
-fun ItemChange.formatChat(): IChatComponent {
-	return ChatComponentText(" ")
-		.appendSibling(direction.formatChat())
-		.appendText(" ")
-		.appendSibling(ChatComponentText("$count").setChatStyle(ChatStyle().setColor(EnumChatFormatting.WHITE)))
-		.appendSibling(ChatComponentText("x").setChatStyle(ChatStyle().setColor(EnumChatFormatting.DARK_GRAY)))
-		.appendText(" ")
-		.appendSibling(ChatComponentText(itemId.string).setChatStyle(ChatStyle().setParentStyle(ChatStyle().setColor(
-			EnumChatFormatting.WHITE))))
+fun ItemChange.formatChat(): Component {
+	return Component.literal(" ")
+		.append(direction.formatChat())
+		.append(" ")
+		.append(Component.literal("$count").setStyle(Style.EMPTY.withColor(TextColor.WHITE)))
+		.append(Component.literal("x").setStyle(Style.EMPTY.withColor(TextColor.DARK_GRAY)))
+		.append(" ")
+		.append(
+			Component.literal(itemId.string).setStyle(
+				Style.EMPTY.withColor(
+					TextColor.WHITE
+				)
+			)
+		)
 }
 

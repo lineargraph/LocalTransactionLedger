@@ -13,17 +13,18 @@ import moe.nea.ledger.getDisplayNameU
 import moe.nea.ledger.unformattedString
 import moe.nea.ledger.useMatcher
 import moe.nea.ledger.utils.di.Inject
-import net.minecraftforge.fml.common.eventhandler.SubscribeEvent
+import moe.nea.ledger.eventbus.SubscribeEvent
 import java.time.Instant
 import java.util.concurrent.locks.ReentrantLock
 import kotlin.time.Duration.Companion.seconds
+import moe.nea.ledger.utils.MigrationUtil.stack
 
 class DungeonChestDetection @Inject constructor(val logger: LedgerLogger) : ChestDetection() {
 
 	@SubscribeEvent
 	fun onKismetClick(event: GuiClickEvent) {
 		val slot = event.slotIn ?: return
-		if (!slot.inventory.displayName.unformattedText.unformattedString().endsWith(" Chest")) return
+		if (!event.screenName.unformattedString().endsWith(" Chest")) return
 		val stack = slot.stack ?: return
 		if (stack.getDisplayNameU() == "§aReroll Chest") {
 			logger.logEntry(
@@ -49,7 +50,7 @@ class DungeonChestDetection @Inject constructor(val logger: LedgerLogger) : Ches
 
 	@SubscribeEvent
 	fun onRewardChestClick(event: GuiClickEvent) {
-		lastOpenedChest = ExpiringValue(scrapeChestReward(event.slotIn ?: return) ?: return)
+		lastOpenedChest = ExpiringValue(scrapeChestReward(event) ?: return)
 	}
 
 	class Mutex<T>(defaultValue: T) {

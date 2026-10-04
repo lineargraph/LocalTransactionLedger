@@ -1,20 +1,22 @@
 package moe.nea.ledger
 
-import net.minecraft.inventory.IInventory
-import net.minecraft.item.ItemStack
-import net.minecraft.nbt.NBTTagCompound
+import kotlin.jvm.optionals.getOrNull
+import net.minecraft.core.component.DataComponents
+import net.minecraft.nbt.CompoundTag
+import net.minecraft.network.chat.Component
+import net.minecraft.world.item.ItemStack
 
 
-fun ItemStack.getExtraAttributes(): NBTTagCompound {
-	val nbt = this.tagCompound ?: return NBTTagCompound()
-	return nbt.getCompoundTag("ExtraAttributes")
+fun ItemStack.getExtraAttributes(): CompoundTag {
+	// TODO: unsafeGetTag
+	return this.get(DataComponents.CUSTOM_DATA)?.copyTag() ?: return CompoundTag()
 }
 
 fun ItemStack?.getInternalId(): ItemId? {
-	if (this == null) return null
+	if (this == null || this.isEmpty) return null
 	val extraAttributes = getExtraAttributes()
-	var id = extraAttributes.getString("id")
-	id = id.takeIf { it.isNotBlank() }
+	var id = extraAttributes.getString("id").orElse("")
+	id = id?.takeIf { it.isNotBlank() }
 	if (id == "PET") {
 		id = getPetId() ?: id
 	}
@@ -27,8 +29,8 @@ fun ItemStack?.getInternalId(): ItemId? {
 }
 
 fun ItemStack.getEnchanments(): Map<String, Int> {
-	val enchantments = getExtraAttributes().getCompoundTag("enchantments")
-	return enchantments.keySet.associateWith { enchantments.getInteger(it) }
+	val enchantments = getExtraAttributes().getCompound("enchantments").getOrNull() ?: return mapOf()
+	return enchantments.keySet().associateWith { enchantments.getInt(it).orElseThrow() }
 }
 
 class PetInfo {
@@ -37,10 +39,12 @@ class PetInfo {
 }
 
 fun ItemStack.getPetId(): String? {
-	val petInfoStr = getExtraAttributes().getString("petInfo")
+	val petInfoStr = getExtraAttributes().getString("petInfo").getOrNull() ?: return null
 	val petInfo = runCatching {
-		Ledger.gson.fromJson(petInfoStr,
-		                     PetInfo::class.java)
+		Ledger.gson.fromJson(
+			petInfoStr,
+			PetInfo::class.java
+		)
 	}.getOrNull() // TODO: error reporting to sentry
 	if (petInfo?.type == null || petInfo.tier == null) return null
 	return petInfo.type + ";" + rarityToIndex(petInfo.tier ?: "")
@@ -59,32 +63,19 @@ fun rarityToIndex(rarity: String): Int {
 }
 
 fun ItemStack.getLore(): List<String> {
-	val nbt = this.tagCompound ?: NBTTagCompound()
-	val extraAttributes = nbt.getCompoundTag("display")
-	val lore = extraAttributes.getTagList("Lore", 8)
-	return (0 until lore.tagCount()).map { lore.getStringTagAt(it) }
+	// TODO: non stringified lore handling
+	return get(DataComponents.LORE)
+		?.lines
+		?.map { it.getString().unformattedString() } ?: listOf() // TODO: should this be non stringified? probably not
 }
 
-
-fun IInventory.asIterable(): Iterable<ItemStack?> = object : Iterable<ItemStack?> {
-	override fun iterator(): Iterator<ItemStack?> {
-		return object : Iterator<ItemStack?> {
-			var i = 0
-			override fun hasNext(): Boolean {
-				return i < this@asIterable.sizeInventory
-			}
-
-			override fun next(): ItemStack? {
-				if (!hasNext()) throw NoSuchElementException("$i is out of range for inventory ${this@asIterable}")
-				return this@asIterable.getStackInSlot(i++)
-			}
-		}
-	}
+fun ItemStack.getNbtDisplayName(): Component {
+	return this.get(DataComponents.CUSTOM_NAME)
+		?: this.get(DataComponents.ITEM_NAME)
+		?: this.displayName
 }
 
 fun ItemStack.getDisplayNameU(): String {
-	val nbt = this.tagCompound ?: NBTTagCompound()
-	val extraAttributes = nbt.getCompoundTag("display")
-	return extraAttributes.getString("Name")
+	return getNbtDisplayName().getString().unformattedString()
 }
 

@@ -1,5 +1,7 @@
 package moe.nea.ledger.modules
 
+import java.time.Instant
+import kotlin.time.Duration.Companion.seconds
 import moe.nea.ledger.ExpiringValue
 import moe.nea.ledger.ItemChange
 import moe.nea.ledger.ItemId
@@ -8,18 +10,13 @@ import moe.nea.ledger.LedgerLogger
 import moe.nea.ledger.ROMAN_NUMBER_PATTERN
 import moe.nea.ledger.SHORT_NUMBER_PATTERN
 import moe.nea.ledger.TransactionType
+import moe.nea.ledger.eventbus.SubscribeEvent
 import moe.nea.ledger.events.BeforeGuiAction
 import moe.nea.ledger.events.ChatReceived
 import moe.nea.ledger.parseRomanNumber
 import moe.nea.ledger.parseShortNumber
-import moe.nea.ledger.unformattedString
 import moe.nea.ledger.useMatcher
 import moe.nea.ledger.utils.di.Inject
-import net.minecraft.client.gui.inventory.GuiChest
-import net.minecraft.inventory.ContainerChest
-import net.minecraftforge.fml.common.eventhandler.SubscribeEvent
-import java.time.Instant
-import kotlin.time.Duration.Companion.seconds
 
 class MinionDetection @Inject constructor(val ledger: LedgerLogger) {
 	// §aYou received §r§6367,516.8 coins§r§a!
@@ -30,9 +27,8 @@ class MinionDetection @Inject constructor(val ledger: LedgerLogger) {
 
 	@SubscribeEvent
 	fun onBeforeClaim(event: BeforeGuiAction) {
-		val container = event.gui as? GuiChest ?: return
-		val inv = (container.inventorySlots as ContainerChest).lowerChestInventory
-		val invName = inv.displayName.unformattedText.unformattedString()
+		val container = event.chestSlots ?: return
+		val invName = event.screenName
 		minionNamePattern.useMatcher(invName) {
 			val name = group("name")
 			val level = parseRomanNumber(group("level"))

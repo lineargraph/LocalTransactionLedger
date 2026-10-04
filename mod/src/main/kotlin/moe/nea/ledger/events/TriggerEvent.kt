@@ -1,7 +1,14 @@
 package moe.nea.ledger.events
 
-import net.minecraftforge.fml.common.eventhandler.Cancelable
-import net.minecraftforge.fml.common.eventhandler.Event
+import com.google.gson.JsonElement
 
-@Cancelable
-data class TriggerEvent(val action: String) : Event()
+data class TriggerEvent(
+	val action: String,
+	var isConsumed: Boolean = false
+	// TODO: make the consumption do just about anything
+) : LedgerEvent() {
+
+	override fun serialize(): JsonElement {
+		TODO("Not yet implemented")
+	}
+}

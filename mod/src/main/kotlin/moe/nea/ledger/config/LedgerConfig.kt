@@ -3,12 +3,13 @@ package moe.nea.ledger.config
 import io.github.notenoughupdates.moulconfig.Config
 import io.github.notenoughupdates.moulconfig.DescriptionRendereringBehaviour
 import io.github.notenoughupdates.moulconfig.annotations.Category
+import io.github.notenoughupdates.moulconfig.common.text.StructuredText
 import io.github.notenoughupdates.moulconfig.processor.ProcessedOption
 import moe.nea.ledger.Ledger
 
 class LedgerConfig : Config() {
-	override fun getTitle(): String {
-		return "§6Ledger §7- §6Hypixel SkyBlock data logger §7by §anea89o"
+	override fun getTitle(): StructuredText {
+		return StructuredText.of("§6Ledger §7- §6Hypixel SkyBlock data logger §7by §anea89o")
 	}
 
 	override fun saveNow() {

@@ -9,19 +9,17 @@ import moe.nea.ledger.events.ChatReceived
 import moe.nea.ledger.utils.ULIDWrapper
 import moe.nea.ledger.utils.di.Inject
 import net.minecraft.client.Minecraft
-import net.minecraft.util.ChatComponentText
-import net.minecraft.util.IChatComponent
-import net.minecraftforge.fml.common.eventhandler.SubscribeEvent
-import net.minecraftforge.fml.common.gameevent.TickEvent.ClientTickEvent
+import net.minecraft.network.chat.Component
+import moe.nea.ledger.eventbus.SubscribeEvent
+import moe.nea.ledger.events.TickEvent
 import java.io.File
 import java.text.SimpleDateFormat
-import java.util.Date
-import java.util.UUID
+import java.util.*
 
 class LedgerLogger {
-	fun printOut(text: String) = printOut(ChatComponentText(text))
-	fun printOut(comp: IChatComponent) {
-		Minecraft.getMinecraft().ingameGUI?.chatGUI?.printChatMessage(comp)
+	fun printOut(text: String) = printOut(Component.literal(text))
+	fun printOut(comp: Component) {
+		Minecraft.getInstance().gui.hud.chat.addClientSystemMessage(comp)
 	}
 
 	val profileIdPattern =
@@ -76,7 +74,7 @@ class LedgerLogger {
 	}
 
 	@SubscribeEvent
-	fun onTick(event: ClientTickEvent) {
+	fun onTick(event: TickEvent) {
 		if (!hasRecentlyMerged && (System.currentTimeMillis() - lastMergeTime) > 60_000L) {
 			lastMergeTime = System.currentTimeMillis()
 			doMerge()

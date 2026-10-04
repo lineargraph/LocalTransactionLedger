@@ -9,4 +9,5 @@ dependencies {
 	implementation("com.google.code.gson:gson:2.9.1") // Match loom :)
 	implementation(gradleApi())
 	api("com.guardsquare:proguard-gradle:7.6.1")
+	api("org.ow2.asm:asm:9.10.1")
 }

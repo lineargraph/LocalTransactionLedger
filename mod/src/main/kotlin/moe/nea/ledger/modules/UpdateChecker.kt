@@ -7,6 +7,7 @@ import moe.nea.ledger.LedgerLogger
 import moe.nea.ledger.TriggerCommand
 import moe.nea.ledger.config.LedgerConfig
 import moe.nea.ledger.config.MainOptions
+import moe.nea.ledger.eventbus.SubscribeEvent
 import moe.nea.ledger.events.RegistrationFinishedEvent
 import moe.nea.ledger.events.TriggerEvent
 import moe.nea.ledger.gen.BuildConfig
@@ -14,17 +15,9 @@ import moe.nea.ledger.utils.ErrorUtil
 import moe.nea.ledger.utils.MinecraftExecutor
 import moe.nea.ledger.utils.di.Inject
 import moe.nea.ledger.utils.network.RequestUtil
-import moe.nea.libautoupdate.CurrentVersion
-import moe.nea.libautoupdate.GithubReleaseUpdateData
-import moe.nea.libautoupdate.GithubReleaseUpdateSource
-import moe.nea.libautoupdate.PotentialUpdate
-import moe.nea.libautoupdate.UpdateContext
-import moe.nea.libautoupdate.UpdateData
-import moe.nea.libautoupdate.UpdateTarget
-import moe.nea.libautoupdate.UpdateUtils
-import net.minecraft.util.ChatComponentText
-import net.minecraft.util.ChatStyle
-import net.minecraftforge.fml.common.eventhandler.SubscribeEvent
+import moe.nea.libautoupdate.*
+import net.minecraft.network.chat.Component
+import net.minecraft.network.chat.Style
 import java.util.concurrent.CompletableFuture
 
 class UpdateChecker @Inject constructor(
@@ -73,7 +66,7 @@ class UpdateChecker @Inject constructor(
 		val releaseRegex = "commit: `(?<hash>[a-f0-9]+)`".toPattern()
 
 		override fun findAsset(release: GithubRelease?): UpdateData? {
-			val update = super.findAsset(release) as GithubReleaseUpdateData? ?: return null
+			val update = super.findAsset(release) as? GithubReleaseUpdateData? ?: return null
 			return GithubReleaseUpdateData(
 				update.versionName,
 				releaseRegex.matcher(update.releaseDescription)
@@ -133,8 +126,8 @@ class UpdateChecker @Inject constructor(
 		hasNotified = true
 		if (!potentialUpdate.isUpdateAvailable) return
 		logger.printOut(
-			ChatComponentText("§aThere is a new update for LocalTransactionLedger. Click here to automatically download and install it.")
-				.setChatStyle(ChatStyle().setChatClickEvent(triggerCommand.getTriggerCommandLine(installTrigger))))
+			Component.literal("§aThere is a new update for LocalTransactionLedger. Click here to automatically download and install it.")
+				.setStyle(Style.EMPTY.withClickEvent(triggerCommand.getTriggerCommandLine(installTrigger))))
 		if (config.main.updateCheck == MainOptions.UpdateCheckBehaviour.FULL) {
 			downloadUpdate()
 		}
@@ -159,7 +152,7 @@ class UpdateChecker @Inject constructor(
 	@SubscribeEvent
 	fun onTrigger(event: TriggerEvent) {
 		if (event.action == installTrigger) {
-			event.isCanceled = true
+			event.isConsumed = true
 			downloadUpdate()
 		}
 	}

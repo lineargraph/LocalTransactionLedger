@@ -12,8 +12,9 @@ import moe.nea.ledger.getDisplayNameU
 import moe.nea.ledger.getLore
 import moe.nea.ledger.unformattedString
 import moe.nea.ledger.utils.di.Inject
-import net.minecraftforge.fml.common.eventhandler.SubscribeEvent
+import moe.nea.ledger.eventbus.SubscribeEvent
 import java.time.Instant
+import moe.nea.ledger.utils.MigrationUtil.stack
 
 class VisitorDetection {
 	@Inject

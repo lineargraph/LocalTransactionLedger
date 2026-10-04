@@ -14,9 +14,9 @@ import moe.nea.ledger.utils.telemetry.EventRecorder
 import moe.nea.ledger.utils.telemetry.JsonElementContext
 import moe.nea.ledger.utils.telemetry.LoggingEventRecorder
 import moe.nea.ledger.utils.telemetry.Span
+import net.fabricmc.loader.api.FabricLoader
 import net.minecraft.client.Minecraft
-import net.minecraft.util.Session
-import net.minecraftforge.fml.common.Loader
+import com.mojang.authlib.GameProfile;
 
 object TelemetryProvider {
 	fun injectTo(di: DI) {
@@ -32,28 +32,28 @@ object TelemetryProvider {
 	val MINECRAFT_VERSION = "minecraft_version"
 	val MODS = "mods"
 
-	class MinecraftUser(val session: Session) : ContextValue {
+	class MinecraftUser(val session: GameProfile) : ContextValue {
 		override fun serialize(): JsonElement {
 			val obj = JsonObject()
-			obj.addProperty("uuid", session.playerID)
-			obj.addProperty("name", session.username)
+			obj.addProperty("uuid", session.id.toString())
+			obj.addProperty("name", session.name)
 			return obj
 		}
 	}
 
 	fun setupDefaultSpan() {
 		val sp = Span.rootSpan
-		sp.add(USER, MinecraftUser(Minecraft.getMinecraft().session))
+		sp.add(USER, MinecraftUser(Minecraft.getInstance().gameProfile))
 		sp.add(MINECRAFT_VERSION, ContextValue.compound(
-			"static" to "1.8.9",
-			"rt" to Minecraft.getMinecraft().version,
+			"static" to BuildConfig.MC_VERSION,
+			"rt" to Minecraft.getInstance().launchedVersion,
 		))
 		val mods = JsonArray()
-		Loader.instance().activeModList.map {
+		FabricLoader.getInstance().allMods.map {
 			val obj = JsonObject()
-			obj.addProperty("id", it.modId)
-			obj.addProperty("version", it.version)
-			obj.addProperty("displayVersion", it.displayVersion)
+			obj.addProperty("id", it.metadata.id)
+			obj.addProperty("version", it.metadata.version.friendlyString)
+			obj.addProperty("name", it.metadata.name)
 			obj
 		}.forEach(mods::add)
 		sp.add(MODS, JsonElementContext(mods))
