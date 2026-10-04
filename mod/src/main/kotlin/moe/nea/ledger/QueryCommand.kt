@@ -1,31 +1,21 @@
 package moe.nea.ledger
 
-import moe.nea.ledger.database.sql.ANDExpression
-import moe.nea.ledger.database.sql.BooleanExpression
-import moe.nea.ledger.database.sql.Clause
 import moe.nea.ledger.database.DBItemEntry
 import moe.nea.ledger.database.DBLogEntry
 import moe.nea.ledger.database.Database
+import moe.nea.ledger.database.sql.ANDExpression
+import moe.nea.ledger.database.sql.BooleanExpression
+import moe.nea.ledger.database.sql.Clause
 import moe.nea.ledger.utils.ULIDWrapper
 import moe.nea.ledger.utils.di.Inject
-import net.minecraft.command.LedgerCommand
-import net.minecraft.command.ICommandSender
-import net.minecraft.util.BlockPos
-import net.minecraft.util.ChatComponentText
-import net.minecraft.util.ChatStyle
-import net.minecraft.util.EnumChatFormatting
+import net.minecraft.network.chat.Component
+import net.minecraft.network.chat.Style
+import net.minecraft.network.chat.TextColor
 
 class QueryCommand : LedgerCommand() {
-	override fun canCommandSenderUseCommand(sender: ICommandSender?): Boolean {
-		return true
-	}
 
 	override fun getCommandName(): String {
 		return "ledger"
-	}
-
-	override fun getCommandUsage(sender: ICommandSender?): String {
-		return ""
 	}
 
 	override fun getCommandAliases(): List<String> {
@@ -35,7 +25,7 @@ class QueryCommand : LedgerCommand() {
 	@Inject
 	lateinit var logger: LedgerLogger
 
-	override fun processCommand(sender: ICommandSender, args: Array<out String>) {
+	override fun processCommand(args: Array<out String>) {
 		if (args.isEmpty()) {
 			logger.printOut("§eHere is how you can look up transactions:")
 			logger.printOut("")
@@ -70,17 +60,15 @@ class QueryCommand : LedgerCommand() {
 		}
 	}
 
-	override fun addTabCompletionOptions(
-		sender: ICommandSender,
-		args: Array<out String>,
-		pos: BlockPos
-	): MutableList<String>? {
-		when (val p = parseArgs(args)) {
-			is ParseResult.MissingArg -> return null
-			is ParseResult.Success -> return p.lastFilterM.tabComplete(args.last())
-			is ParseResult.UnknownFilter -> return getListOfStringsMatchingLastWord(args, mFilters.keys)
-		}
-	}
+//	fun addTabCompletionOptions(
+//		args: Array<out String>,
+//	): MutableList<String>? {
+//		when (val p = parseArgs(args)) {
+//			is ParseResult.MissingArg -> return null
+//			is ParseResult.Success -> return p.lastFilterM.tabComplete(args.last())
+//			is ParseResult.UnknownFilter -> return getListOfStringsMatchingLastWord(args, mFilters.keys)
+//		}
+//	}
 
 	@Inject
 	lateinit var database: Database
@@ -104,23 +92,23 @@ class QueryCommand : LedgerCommand() {
 			val items = DBItemEntry.selectAll(database.connection)
 				.where(Clause { column(DBItemEntry.transactionId) eq string(transactionId.wrapped) })
 				.map { DBItemEntry.objMap(it) }
-			val text = ChatComponentText("")
-				.setChatStyle(ChatStyle().withColor(EnumChatFormatting.YELLOW))
-				.appendSibling(
-					ChatComponentText(type.name)
-						.setChatStyle(ChatStyle().withColor(EnumChatFormatting.GREEN))
+			val text = Component.empty()
+				.setStyle(Style.EMPTY.withColor(TextColor.YELLOW))
+				.append(
+					Component.literal(type.name)
+						.setStyle(Style.EMPTY.withColor(TextColor.GREEN))
 				)
-				.appendText(" on ")
-				.appendSibling(timestamp.formatChat())
-				.appendText("\n")
-				.appendSibling(
-					ChatComponentText(transactionId.wrapped).setChatStyle(ChatStyle().withColor(EnumChatFormatting.DARK_GRAY))
+				.append(" on ")
+				.append(timestamp.formatChat())
+				.append("\n")
+				.append(
+					Component.literal(transactionId.wrapped).setStyle(Style.EMPTY.withColor(TextColor.DARK_GRAY))
 				)
 			for (item in items) {
-				text.appendText("\n")
-					.appendSibling(item.formatChat())
+				text.append("\n")
+					.append(item.formatChat())
 			}
-			text.appendText("\n")
+			text.append("\n")
 			logger.printOut(text)
 		}
 	}

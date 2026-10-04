@@ -10,7 +10,7 @@ class GuiContextValue(val gui: Screen) : ContextValue {
 	override fun serialize(): JsonElement {
 		return JsonObject().apply {
 			addProperty("class", gui.javaClass.name)
-			addProperty("name", ScreenUtil.estimateName(gui))
+			addProperty("name", gui.title.string)
 			addProperty("containerId", (gui as MenuAccess<*>).menu.containerId)
 		}
 	}

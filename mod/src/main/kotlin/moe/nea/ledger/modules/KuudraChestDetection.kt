@@ -29,7 +29,7 @@ class KuudraChestDetection : ChestDetection() {
 
 	@SubscribeEvent
 	fun onRewardChestClick(event: GuiClickEvent) {
-		val diffs = scrapeChestReward(event.slotIn ?: return) ?: return
+		val diffs = scrapeChestReward(event) ?: return
 		val requiredKey = diffs.diff.find {
 			it.direction == ItemChange.ChangeDirection.LOST && kuudraKeyPattern.asPredicate().test(it.itemId.string)
 		}?.itemId

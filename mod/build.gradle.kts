@@ -22,9 +22,12 @@ java {
 	toolchain.languageVersion.set(JavaLanguageVersion.of(25))
 }
 
-
+repositories {
+	maven("https://libraries.minecraft.net/")
+}
 loom {
 	clientOnlyMinecraftJar()
+	log4jConfigs.from(file("log4j2.xml"))
 }
 
 
@@ -73,7 +76,8 @@ dependencies {
 	shadowImpl("moe.nea:libautoupdate:1.3.1") {
 		exclude(module = "gson")
 	}
-	runtimeOnly("me.djtheredstoner:DevAuth-forge-legacy:1.2.1")
+	compileOnly("com.mojang:authlib:7.0.63")
+//	runtimeOnly("me.djtheredstoner:DevAuth-forge-legacy:1.2.1")
 	testImplementation("org.junit.jupiter:junit-jupiter:5.9.2")
 }
 
@@ -164,5 +168,5 @@ tasks.runClient {
 buildConfig {
 	packageName("moe.nea.ledger.gen")
 	buildConfigField("MODID", modid)
+	buildConfigField("MC_VERSION", mcVersion)
 }
-

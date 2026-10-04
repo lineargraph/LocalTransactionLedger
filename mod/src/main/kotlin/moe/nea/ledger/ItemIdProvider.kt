@@ -10,21 +10,14 @@ import moe.nea.ledger.gen.ItemIds
 import moe.nea.ledger.modules.ExternalDataProvider
 import net.minecraft.client.Minecraft
 import net.minecraft.world.item.ItemStack
-import net.minecraftforge.client.event.GuiScreenEvent
-import org.lwjgl.input.Mouse
 
 class ItemIdProvider {
-
-	@SubscribeEvent
-	fun onMouseInput(event: GuiScreenEvent.MouseInputEvent.Pre) {
-		if (Mouse.getEventButton() == -1) return
-		BeforeGuiAction(event.gui).post()
-	}
-
-	@SubscribeEvent
-	fun onKeyInput(event: GuiScreenEvent.KeyboardInputEvent.Pre) {
-		BeforeGuiAction(event.gui).post()
-	}
+//
+//	@SubscribeEvent
+//	fun onMouseInput(event: GuiScreenEvent.MouseInputEvent.Pre) {
+//		if (Mouse.getEventButton() == -1) return
+//		BeforeGuiAction(event.gui).post()
+//	}
 
 	private val knownNames = mutableMapOf<String, ItemId>()
 

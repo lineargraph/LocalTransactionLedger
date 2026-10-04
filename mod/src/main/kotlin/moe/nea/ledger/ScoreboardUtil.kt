@@ -1,7 +1,7 @@
 package moe.nea.ledger
 
+import moe.nea.ledger.mixin.accessors.HudAccessor
 import net.minecraft.client.Minecraft
-import net.minecraft.client.gui.Hud
 import net.minecraft.network.chat.Component
 import net.minecraft.world.scores.DisplaySlot
 import net.minecraft.world.scores.PlayerTeam
@@ -17,7 +17,7 @@ object ScoreboardUtil {
 		val scoreList = scoreboard.listPlayerScores(objective)
 			.asSequence()
 			.filter { !it.isHidden }
-			.sortedWith(Hud.SCORE_DISPLAY_ORDER)
+			.sortedWith(HudAccessor.`getSCORE_DISPLAY_ORDER$ledger`())
 			.take(15)
 			.map {
 				val team = scoreboard.getPlayerTeam(it.owner())

@@ -3,14 +3,18 @@ package moe.nea.ledger
 import com.google.gson.Gson
 import io.github.notenoughupdates.moulconfig.Config
 import io.github.notenoughupdates.moulconfig.managed.ManagedConfig
+import java.io.File
+import java.util.concurrent.ConcurrentLinkedQueue
 import moe.nea.ledger.config.LedgerConfig
 import moe.nea.ledger.config.UpdateUi
 import moe.nea.ledger.config.UpdateUiMarker
 import moe.nea.ledger.database.Database
 import moe.nea.ledger.eventbus.LedgerEventBus
+import moe.nea.ledger.eventbus.SubscribeEvent
 import moe.nea.ledger.events.ChatReceived
 import moe.nea.ledger.events.LateWorldLoadEvent
 import moe.nea.ledger.events.RegistrationFinishedEvent
+import moe.nea.ledger.events.ScreenOpenEvent
 import moe.nea.ledger.events.TickEvent
 import moe.nea.ledger.events.WorldSwitchEvent
 import moe.nea.ledger.gen.BuildConfig
@@ -52,17 +56,14 @@ import moe.nea.ledger.utils.di.DI
 import moe.nea.ledger.utils.di.DIProvider
 import moe.nea.ledger.utils.network.RequestUtil
 import net.fabricmc.api.ClientModInitializer
-import net.fabricmc.fabric.api.client.command.v2.ClientCommands
-import net.fabricmc.fabric.api.client.event.lifecycle.v1.ClientLifecycleEvents
+import net.fabricmc.fabric.api.client.event.lifecycle.v1.ClientLevelEvents
 import net.fabricmc.fabric.api.client.event.lifecycle.v1.ClientTickEvents
 import net.fabricmc.fabric.api.client.message.v1.ClientReceiveMessageEvents
+import net.fabricmc.fabric.api.client.screen.v1.ScreenEvents
 import net.minecraft.client.Minecraft
 import net.minecraft.network.chat.Component
 import org.apache.logging.log4j.LogManager
-import java.io.File
-import java.util.concurrent.ConcurrentLinkedQueue
 
-@Mod(modid = "ledger", useMetadata = true, version = BuildConfig.VERSION)
 class Ledger : ClientModInitializer {
 	/*
 	You have withdrawn 1M coins! You now have 518M coins in your account!
@@ -118,6 +119,8 @@ class Ledger : ClientModInitializer {
 
 	override fun onInitializeClient() {
 		logger.info("Initializing ledger")
+
+		registerEvents()
 
 		TelemetryProvider.setupFor(di)
 		di.registerSingleton(this)
@@ -182,6 +185,22 @@ class Ledger : ClientModInitializer {
 		RegistrationFinishedEvent().post()
 	}
 
+	fun registerEvents() {
+		registerChatEvent()
+		registerTickEvent()
+		registerScreenEvents()
+		registerJoinEvent()
+	}
+
+	fun registerScreenEvents() {
+		ScreenEvents.AFTER_INIT.register { minecraft, screen, i, i1 ->
+			ScreenOpenEvent(screen).post()
+			ScreenEvents.remove(screen).register {
+
+			}
+		}
+	}
+
 	fun registerTickEvent() {
 		var currentTick = 0
 		ClientTickEvents.END_CLIENT_TICK.register(ClientTickEvents.EndTick { instance ->
@@ -191,17 +210,16 @@ class Ledger : ClientModInitializer {
 
 	var lastJoin = -1L
 
-	@SubscribeEvent
-	fun worldSwitchEvent(event: EntityJoinWorldEvent) {
-		if (event.entity == Minecraft.getMinecraft().thePlayer) {
+	fun registerJoinEvent() {
+		ClientLevelEvents.AFTER_CLIENT_LEVEL_CHANGE.register { minecraft, level ->
+			// TODO: originally this used an entity join world event, if there are issues perhaps change back to this
 			lastJoin = System.currentTimeMillis()
-			MinecraftForge.EVENT_BUS.post(WorldSwitchEvent())
+			WorldSwitchEvent().post()
 		}
 	}
 
 	@SubscribeEvent
 	fun onTick(tickEvent: TickEvent) {
-
 		if (lastJoin > 0
 			&& System.currentTimeMillis() - lastJoin > 10_000
 			&& Minecraft.getInstance().player != null
@@ -215,9 +233,8 @@ class Ledger : ClientModInitializer {
 		}
 	}
 
-	private var lastReceivedMessage: Component? = null
-
 	fun registerChatEvent() {
+		var lastReceivedMessage: Component? = null
 		ClientReceiveMessageEvents.ALLOW_CHAT.register(ClientReceiveMessageEvents.AllowChat { message, signedMessage, sender, params, receptionTimestamp ->
 			lastReceivedMessage = message
 			ChatReceived(message).post()

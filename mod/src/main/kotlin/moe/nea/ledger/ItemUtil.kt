@@ -1,11 +1,10 @@
 package moe.nea.ledger
 
+import kotlin.jvm.optionals.getOrNull
 import net.minecraft.core.component.DataComponents
-import net.minecraft.inventory.IInventory
-import net.minecraft.world.item.ItemStack
 import net.minecraft.nbt.CompoundTag
 import net.minecraft.network.chat.Component
-import kotlin.jvm.optionals.getOrNull
+import net.minecraft.world.item.ItemStack
 
 
 fun ItemStack.getExtraAttributes(): CompoundTag {
@@ -14,10 +13,10 @@ fun ItemStack.getExtraAttributes(): CompoundTag {
 }
 
 fun ItemStack?.getInternalId(): ItemId? {
-	if (this == null) return null
+	if (this == null || this.isEmpty) return null
 	val extraAttributes = getExtraAttributes()
 	var id = extraAttributes.getString("id").orElse("")
-	id = id.takeIf { it.isNotBlank() }
+	id = id?.takeIf { it.isNotBlank() }
 	if (id == "PET") {
 		id = getPetId() ?: id
 	}
@@ -68,23 +67,6 @@ fun ItemStack.getLore(): List<String> {
 	return get(DataComponents.LORE)
 		?.lines
 		?.map { it.getString().unformattedString() } ?: listOf() // TODO: should this be non stringified? probably not
-}
-
-
-fun IInventory.asIterable(): Iterable<ItemStack?> = object : Iterable<ItemStack?> {
-	override fun iterator(): Iterator<ItemStack?> {
-		return object : Iterator<ItemStack?> {
-			var i = 0
-			override fun hasNext(): Boolean {
-				return i < this@asIterable.sizeInventory
-			}
-
-			override fun next(): ItemStack? {
-				if (!hasNext()) throw NoSuchElementException("$i is out of range for inventory ${this@asIterable}")
-				return this@asIterable.getStackInSlot(i++)
-			}
-		}
-	}
 }
 
 fun ItemStack.getNbtDisplayName(): Component {

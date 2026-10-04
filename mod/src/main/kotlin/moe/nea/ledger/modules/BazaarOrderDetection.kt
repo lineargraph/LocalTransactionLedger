@@ -1,5 +1,6 @@
 package moe.nea.ledger.modules
 
+import java.util.regex.Pattern
 import moe.nea.ledger.ItemChange
 import moe.nea.ledger.ItemId
 import moe.nea.ledger.ItemIdProvider
@@ -7,14 +8,15 @@ import moe.nea.ledger.LedgerEntry
 import moe.nea.ledger.LedgerLogger
 import moe.nea.ledger.SHORT_NUMBER_PATTERN
 import moe.nea.ledger.TransactionType
+import moe.nea.ledger.eventbus.SubscribeEvent
 import moe.nea.ledger.events.ChatReceived
+import moe.nea.ledger.events.ScreenOpenEvent
+import moe.nea.ledger.mixin.accessors.AbstractSignEditScreenAccessor
 import moe.nea.ledger.parseShortNumber
+import moe.nea.ledger.unformattedString
 import moe.nea.ledger.useMatcher
 import moe.nea.ledger.utils.di.Inject
-import net.minecraft.client.gui.inventory.GuiEditSign
-import net.minecraftforge.client.event.GuiScreenEvent
-import moe.nea.ledger.eventbus.SubscribeEvent
-import java.util.regex.Pattern
+import net.minecraft.client.gui.screens.inventory.AbstractSignEditScreen
 
 class BazaarOrderDetection @Inject constructor(val ledger: LedgerLogger, val ids: ItemIdProvider) {
 
@@ -29,13 +31,12 @@ class BazaarOrderDetection @Inject constructor(val ledger: LedgerLogger, val ids
 	var lastFlippedPreviousPrice = 0.0
 
 	@SubscribeEvent
-	fun detectSignFlip(event: GuiScreenEvent.InitGuiEvent) {
-		val gui = event.gui
-		if (gui !is GuiEditSign) return
-		gui as AccessorGuiEditSign
-		val text = gui.tileEntity_ledger.signText
-		if (text[2].unformattedText != "Previous price:") return
-		previousPricePattern.useMatcher(text[3].unformattedText) {
+	fun detectSignFlip(event: ScreenOpenEvent) {
+		val gui = event.screen as? AbstractSignEditScreen ?: return
+		gui as AbstractSignEditScreenAccessor
+		val text = gui.`messages$ledger`
+		if (text[2].unformattedString() != "Previous price:") return
+		previousPricePattern.useMatcher(text[3].unformattedString()) {
 			lastFlippedPreviousPrice = parseShortNumber(group("price"))
 		}
 	}

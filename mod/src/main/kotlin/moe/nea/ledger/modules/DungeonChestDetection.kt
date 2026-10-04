@@ -17,6 +17,7 @@ import moe.nea.ledger.eventbus.SubscribeEvent
 import java.time.Instant
 import java.util.concurrent.locks.ReentrantLock
 import kotlin.time.Duration.Companion.seconds
+import moe.nea.ledger.utils.MigrationUtil.stack
 
 class DungeonChestDetection @Inject constructor(val logger: LedgerLogger) : ChestDetection() {
 
@@ -49,7 +50,7 @@ class DungeonChestDetection @Inject constructor(val logger: LedgerLogger) : Ches
 
 	@SubscribeEvent
 	fun onRewardChestClick(event: GuiClickEvent) {
-		lastOpenedChest = ExpiringValue(scrapeChestReward(event.slotIn ?: return) ?: return)
+		lastOpenedChest = ExpiringValue(scrapeChestReward(event) ?: return)
 	}
 
 	class Mutex<T>(defaultValue: T) {
